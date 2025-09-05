@@ -1,0 +1,94 @@
+version: '3.8'
+
+services:
+  rabbitmq:
+    image: rabbitmq:3.9-management-alpine
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - ~/.docker-conf/rabbitmq/data/:/var/lib/rabbitmq/
+      - ~/.docker-conf/rabbitmq/log/:/var/log/rabbitmq
+    networks:
+      - cmlre_net
+
+  db:
+    image: postgres:13-alpine
+    container_name: postgres_db
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=cmlre_data
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    networks:
+      - cmlre_net
+
+  api:
+    build:
+      context: ./api
+      dockerfile_inline: |
+        FROM python:3.9-slim
+        WORKDIR /app
+        COPY requirements_db.txt .
+        RUN pip install --no-cache-dir -r requirements_db.txt
+        COPY main_db.py .
+        CMD ["uvicorn", "main_db:app", "--host", "0.0.0.0", "--port", "8000"]
+    container_name: cmlre_api
+    ports:
+      - "8000:8000"
+    depends_on:
+      - rabbitmq
+      - db
+    networks:
+      - cmlre_net
+    environment:
+      - RABBITMQ_HOST=rabbitmq
+      - POSTGRES_HOST=db
+      - POSTGRES_DB=cmlre_data
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+
+  workers:
+    build:
+      context: ./workers
+      dockerfile_inline: |
+        FROM python:3.9-slim
+        WORKDIR /app
+        COPY requirements_db.txt .
+        RUN pip install --no-cache-dir -r requirements_db.txt
+        COPY . .
+    container_name: cmlre_workers
+    # We now run the db-enabled worker. The other workers could be run similarly.
+    command: python otolith_worker_db.py
+    depends_on:
+      - rabbitmq
+      - db
+    networks:
+      - cmlre_net
+    environment:
+      - RABBITMQ_HOST=rabbitmq
+      - POSTGRES_HOST=db
+      - POSTGRES_DB=cmlre_data
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+
+  frontend:
+    image: nginx:alpine
+    container_name: cmlre_frontend
+    ports:
+      - "8080:80"
+    volumes:
+      - ./frontend/index_db.html:/usr/share/nginx/html/index.html
+    networks:
+      - cmlre_net
+
+networks:
+  cmlre_net:
+    driver: bridge
+
+volumes:
+  postgres_data:
