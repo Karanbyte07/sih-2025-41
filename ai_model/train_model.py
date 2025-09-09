@@ -51,6 +51,3 @@ with open(MODEL_PATH, 'wb') as f:
 print(f"Model successfully saved to {MODEL_PATH}")
 print("--- Model Training Finished ---")
 
-
-# some changes here 
-# print ("--- Starting Model Training ---")
