@@ -1,0 +1,116 @@
+version: '3.8'
+
+services:
+  rabbitmq:
+    image: rabbitmq:3.9-management-alpine
+    container_name: rabbitmq-ai
+    networks: [cmlre_net_ai]
+
+  db:
+    image: postgres:13-alpine
+    container_name: postgres_db-ai
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=cmlre_data
+    volumes: [postgres_data_ai:/var/lib/postgresql/data/]
+    networks: [cmlre_net_ai]
+
+  model-builder:
+    build:
+      context: ./ai_model
+      dockerfile_inline: |
+        FROM python:3.9-slim
+        WORKDIR /app
+        COPY requirements.txt .
+        RUN pip install --no-cache-dir -r requirements.txt
+        COPY . .
+    container_name: model_builder-ai
+    # This service runs once to train and save the model, then exits.
+    command: python train_model.py
+    volumes:
+      - model_volume:/app/model
+      - ./ai_model:/app/data
+    networks: [cmlre_net_ai]
+
+  ai_worker:
+    build:
+      context: ./workers
+      dockerfile_inline: |
+        FROM python:3.9-slim
+        WORKDIR /app
+        COPY requirements_ai.txt .
+        RUN pip install --no-cache-dir -r requirements_ai.txt
+        COPY ai_worker.py .
+    container_name: ai_worker-ai
+    command: python ai_worker.py
+    depends_on:
+      - rabbitmq
+      - db
+      - model-builder # Ensures model is built before this worker starts
+    volumes:
+      - model_volume:/app/model # Mounts the trained model
+    networks: [cmlre_net_ai]
+    environment:
+      - RABBITMQ_HOST=rabbitmq
+      - POSTGRES_HOST=db
+      - POSTGRES_DB=cmlre_data
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+
+  api:
+    build:
+      context: ./api
+      dockerfile_inline: |
+        FROM python:3.9-slim
+        WORKDIR /app
+        COPY requirements_db.txt .
+        RUN pip install --no-cache-dir -r requirements_db.txt
+        COPY main_ai.py .
+        CMD ["uvicorn", "main_ai:app", "--host", "0.0.0.0", "--port", "8000"]
+    container_name: cmlre_api-ai
+    ports: ["8001:8000"]
+    depends_on: [rabbitmq, db]
+    networks: [cmlre_net_ai]
+    environment:
+      - RABBITMQ_HOST=rabbitmq
+      - POSTGRES_HOST=db
+      - POSTGRES_DB=cmlre_data
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+
+  workers:
+    build:
+      context: ./workers
+      dockerfile_inline: |
+        FROM python:3.9-slim
+        WORKDIR /app
+        COPY requirements_ai.txt .
+        RUN pip install --no-cache-dir -r requirements_ai.txt
+        COPY otolith_worker_ai.py .
+    container_name: cmlre_workers-ai
+    command: python otolith_worker_ai.py
+    depends_on: [rabbitmq, db]
+    networks: [cmlre_net_ai]
+    environment:
+      - RABBITMQ_HOST=rabbitmq
+      - POSTGRES_HOST=db
+      - POSTGRES_DB=cmlre_data
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+
+  frontend:
+    image: nginx:alpine
+    container_name: cmlre_frontend-ai
+    ports: ["8081:80"]
+    volumes:
+      - ./frontend/index_ai.html:/usr/share/nginx/html/index.html
+    networks: [cmlre_net_ai]
+
+networks:
+  cmlre_net_ai:
+    driver: bridge
+
+volumes:
+  postgres_data_ai:
+  model_volume:
