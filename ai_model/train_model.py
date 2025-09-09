@@ -53,3 +53,4 @@ print("--- Model Training Finished ---")
 
 
 # some changes here 
+# print ("--- Starting Model Training ---")
