@@ -1,92 +1,116 @@
 import pika
 import json
-import os
 import time
-import pickle
+import os
+import joblib
 import pandas as pd
-import psycopg2
+from sqlalchemy import create_engine, text
+import sys
 
-# --- Database Configuration ---
-DB_HOST = os.getenv("POSTGRES_HOST", "db")
-DB_NAME = os.getenv("POSTGRES_DB", "cmlre_data")
-DB_USER = os.getenv("POSTGRES_USER", "postgres")
-DB_PASSWORD = os.getenv("POSTGRES_PASSWORD", "postgres")
+# --- Configuration ---
+RABBITMQ_HOST = 'rabbitmq'
+DATABASE_URL = "postgresql://postgres:postgres@db:5432/cmlre_data"
+MODEL_PATH = "/app/ai_model/species_classifier.pkl"
+AI_QUEUE = 'ai_queue'
 
-# --- Model Loading ---
-MODEL_PATH = "/app/model/species_classifier.pkl"
-classifier = None
+# Global variable to hold the model
+model = None
 
 def load_model():
-    """Loads the pre-trained classifier model from disk."""
-    global classifier
-    retries = 10
-    while retries > 0:
-        try:
-            with open(MODEL_PATH, 'rb') as f:
-                classifier = pickle.load(f)
-            print(" [x] AI Model loaded successfully.")
+    """Load the trained model from disk with a retry mechanism."""
+    global model
+    max_retries = 12
+    retry_delay = 5  # seconds
+
+    for attempt in range(max_retries):
+        if os.path.exists(MODEL_PATH):
+            print(f"[*] AI Worker: Loading model from {MODEL_PATH}")
+            model = joblib.load(MODEL_PATH)
+            print("[*] AI Worker: Model loaded successfully.")
             return
-        except FileNotFoundError:
-            print(f" [!] Model file not found at {MODEL_PATH}. Retrying in 5 seconds...")
+        else:
+            print(f"[!] AI Worker: Model file not found at {MODEL_PATH}. Retrying in {retry_delay} seconds... ({attempt + 1}/{max_retries})")
+            time.sleep(retry_delay)
+
+    raise Exception("Could not load AI model after multiple retries. Shutting down.")
+
+def connect_to_rabbitmq():
+    """Connect to RabbitMQ with a retry mechanism."""
+    while True:
+        try:
+            connection = pika.BlockingConnection(pika.ConnectionParameters(host=RABBITMQ_HOST))
+            print("[*] AI Worker: Successfully connected to RabbitMQ.")
+            return connection
+        except pika.exceptions.AMQPConnectionError:
+            print("[!] AI Worker: RabbitMQ not ready. Retrying in 5 seconds...")
             time.sleep(5)
-            retries -= 1
-    raise Exception("Could not load AI model. Shutting down.")
 
-def get_db_connection():
-    """Establishes a connection to the PostgreSQL database."""
-    return psycopg2.connect(host=DB_HOST, dbname=DB_NAME, user=DB_USER, password=DB_PASSWORD)
-
-def process_message(ch, method, properties, body):
-    """Callback to process a message, run prediction, and update DB."""
-    data = json.loads(body)
-    image_id = data.get("image_id", "unknown")
-    print(f" [x] Received request for AI prediction for image: {image_id}")
-
-    if not classifier:
-        print(" [!] Classifier model is not loaded. Cannot process message.")
-        # Negative acknowledgement to requeue the message
-        ch.basic_nack(delivery_tag=method.delivery_tag)
-        return
-
+def predict_species(data):
+    """Predicts species based on morphometric data."""
+    if model is None:
+        print("[!] AI Worker: Model is not loaded. Cannot predict.")
+        return "Error: Model not loaded"
     try:
-        # 1. Prepare data for prediction
-        features = pd.DataFrame([data])
-        # Ensure columns are in the same order as during training
-        features = features[['area_px', 'perimeter_px', 'width_px', 'height_px', 'aspect_ratio']]
-        
-        # 2. Make prediction
-        prediction = classifier.predict(features)[0]
-        print(f"  - AI Prediction for {image_id}: {prediction}")
-
-        # 3. Save prediction back to the database
-        with get_db_connection() as conn:
-            with conn.cursor() as cur:
-                # Add a new column if it doesn't exist and update the record
-                cur.execute("ALTER TABLE otolith_morphometrics ADD COLUMN IF NOT EXISTS predicted_species VARCHAR(255);")
-                cur.execute(
-                    "UPDATE otolith_morphometrics SET predicted_species = %s WHERE image_id = %s;",
-                    (prediction, image_id)
-                )
-                conn.commit()
-                print(f"  - Saved prediction to database for {image_id}.")
-
+        df = pd.DataFrame([data])
+        df = df[['area', 'perimeter', 'width', 'height', 'aspect_ratio']]
+        prediction = model.predict(df)
+        return prediction[0]
     except Exception as e:
-        print(f" [!] Error during AI prediction for {image_id}: {e}")
-    finally:
-        ch.basic_ack(delivery_tag=method.delivery_tag)
-        print(f" [x] Acknowledged message for {image_id}.")
+        print(f"[!] AI Worker: Error during prediction: {e}")
+        return "Error: Prediction failed"
 
+def update_prediction_in_db(image_id, species):
+    """Updates the database record with the predicted species."""
+    try:
+        engine = create_engine(DATABASE_URL)
+        with engine.connect() as conn:
+            stmt = text("UPDATE otolith_morphometrics SET predicted_species = :species WHERE image_id = :image_id;")
+            conn.execute(stmt, {'species': species, 'image_id': image_id})
+            conn.commit()
+            print(f"[*] AI Worker: Updated DB for {image_id} with prediction: {species}")
+    except Exception as e:
+        print(f"[!] AI Worker: Database update failed for {image_id}: {e}")
+
+def callback(ch, method, properties, body):
+    """Callback function to process messages from the queue."""
+    try:
+        data = json.loads(body)
+        image_id = data.get('image_id')
+        if not image_id:
+            print("[!] AI Worker: Received message without image_id.")
+            ch.basic_ack(delivery_tag=method.delivery_tag)
+            return
+            
+        print(f"[*] AI Worker: Received data for {image_id}")
+        predicted_species = predict_species(data)
+        if "Error" not in predicted_species:
+            update_prediction_in_db(image_id, predicted_species)
+    except json.JSONDecodeError:
+        print("[!] AI Worker: Could not decode message body.")
+    except Exception as e:
+        print(f"[!] AI Worker: An unexpected error occurred in callback: {e}")
+    
+    ch.basic_ack(delivery_tag=method.delivery_tag)
 
 def main():
-    load_model() # Load model on startup
-
-    rabbitmq_host = os.getenv('RABBITMQ_HOST', 'rabbitmq')
-    connection = pika.BlockingConnection(pika.ConnectionParameters(host=rabbitmq_host))
+    """Main function to start the AI worker."""
+    load_model()
+    connection = connect_to_rabbitmq()
     channel = connection.channel()
-    channel.queue_declare(queue='ai_queue', durable=True)
-    print(' [*] AI Worker: Waiting for messages. To exit press CTRL+C')
-    channel.basic_consume(queue='ai_queue', on_message_callback=process_message)
+    channel.queue_declare(queue=AI_QUEUE, durable=True)
+    channel.basic_qos(prefetch_count=1)
+    channel.basic_consume(queue=AI_QUEUE, on_message_callback=callback)
+    
+    print('[*] AI Worker: Waiting for messages. To exit press CTRL+C')
     channel.start_consuming()
 
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        print('Interrupted')
+        try:
+            sys.exit(0)
+        except SystemExit:
+            os._exit(0)
+

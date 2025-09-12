@@ -3,326 +3,308 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CMLRE Integrated Intelligence Platform</title>
-    <!-- Main JS libraries -->
+    <title>CMLRE - Ocean Data Platform</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- Chart.js plugins for map -->
-    <script src="https://unpkg.com/chart.js-chart-geo@4.3.0/build/index.umd.min.js"></script>
-    <script src="https://unpkg.com/topojson-client@3"></script>
-    
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-geo@4.3.0/build/index.umd.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-light: #f0f9ff; --bg-dark: #18181b; /* Light: sky-50, Dark: zinc-900 */
-            --card-light: #ffffff; --card-dark: #27272a;
-            --text-light: #1e293b; --text-dark: #e4e4e7; /* Light: slate-800, Dark: zinc-200 */
-            --subtext-light: #64748b; --subtext-dark: #a1a1aa; /* Light: slate-500, Dark: zinc-400 */
-            --border-light: #e2e8f0; --border-dark: #3f3f46;
-            --accent: #3b82f6;
+            --bg-light: #f0f9ff;
+            --card-light: #ffffff;
+            --text-light: #0c4a6e;
+            --subtext-light: #38bdf8;
+            --border-light: #e0f2fe;
+
+            --bg-dark: #0f172a;
+            --card-dark: #1e293b;
+            --text-dark: #e2e8f0;
+            --subtext-dark: #7dd3fc;
+            --border-dark: #334155;
         }
-        html.dark { scrollbar-color: #52525b #27272a; }
-        body { font-family: 'Inter', sans-serif; transition: background-color 0.3s, color 0.3s; }
-        .card { transition: background-color 0.3s, border-color 0.3s, box-shadow 0.3s; }
-        .card:hover { transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05), 0 4px 6px -2px rgba(0,0,0,0.05); }
-        .spinner { border-top-color: var(--accent); }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        .animate-spin { animation: spin 1s linear infinite; }
+        html.dark { color-scheme: dark; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-light);
+            color: var(--text-light);
+            transition: background-color 0.3s, color 0.3s;
+        }
+        html.dark body {
+            background-color: var(--bg-dark);
+            color: var(--text-dark);
+        }
+        .card {
+            background-color: var(--card-light);
+            border: 1px solid var(--border-light);
+        }
+        html.dark .card {
+            background-color: var(--card-dark);
+            border: 1px solid var(--border-dark);
+        }
+        .subtext { color: var(--subtext-light); }
+        html.dark .subtext { color: var(--subtext-dark); }
+        .chart-container { position: relative; width: 100%; min-height: 350px; max-height: 400px; }
+        .table-container { max-height: 400px; overflow-y: auto; }
+        .pulse-loader { animation: pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: .5; }
+        }
     </style>
 </head>
-<body class="bg-[var(--bg-light)] text-[var(--text-light)]">
+<body class="antialiased">
 
-    <div class="container mx-auto p-4 sm:p-6 lg:p-8">
-        
-        <!-- Header & Controls -->
-        <header class="flex flex-col sm:flex-row justify-between items-center mb-6">
-            <div>
-                <h1 class="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-sky-400">Integrated Intelligence Platform</h1>
-                <p class="text-[var(--subtext-light)] dark:text-[var(--subtext-dark)]">CMLRE - Real-time Marine Data Exploration</p>
-            </div>
-            <div class="flex items-center gap-4 mt-4 sm:mt-0">
-                <button id="submit-otolith" class="bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700 transition shadow-md hover:shadow-lg">Analyze New Sample</button>
-                <button id="dark-mode-toggle" class="p-2 rounded-lg bg-[var(--card-light)] dark:bg-[var(--card-dark)] border border-[var(--border-light)] dark:border-[var(--border-dark)] shadow-sm">
-                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
-                </button>
-            </div>
-        </header>
-        <div id="ingestion-status" class="text-center mb-6 h-6 text-green-600 font-semibold"></div>
-
-        <!-- Stat Cards -->
-        <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-            <div class="card bg-[var(--card-light)] dark:bg-[var(--card-dark)] p-4 rounded-xl border border-[var(--border-light)] dark:border-[var(--border-dark)] shadow-sm flex items-center gap-4">
-                <div class="bg-blue-50 dark:bg-blue-900/50 p-3 rounded-lg"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2a4 4 0 00-4-4H3V9h2a4 4 0 004-4V3l7 7-7 7z" /></svg></div>
-                <div><h3 class="font-semibold text-sm text-[var(--subtext-light)] dark:text-[var(--subtext-dark)]">Total Samples</h3><p id="stat-total-samples" class="text-2xl font-bold">0</p></div>
-            </div>
-             <div class="card bg-[var(--card-light)] dark:bg-[var(--card-dark)] p-4 rounded-xl border border-[var(--border-light)] dark:border-[var(--border-dark)] shadow-sm flex items-center gap-4">
-                <div class="bg-green-50 dark:bg-green-900/50 p-3 rounded-lg"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M12 14l9-5-9-5-9 5 9 5z" /><path d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-9.998 12.078 12.078 0 01.665-6.479L12 14z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5zm0 0v6" /></svg></div>
-                <div><h3 class="font-semibold text-sm text-[var(--subtext-light)] dark:text-[var(--subtext-dark)]">Species Identified</h3><p id="stat-species-count" class="text-2xl font-bold">0</p></div>
-            </div>
-             <div class="card bg-[var(--card-light)] dark:bg-[var(--card-dark)] p-4 rounded-xl border border-[var(--border-light)] dark:border-[var(--border-dark)] shadow-sm flex items-center gap-4">
-                 <div class="bg-yellow-50 dark:bg-yellow-900/50 p-3 rounded-lg"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 1v4m0 0h-4m4 0l-5-5" /></svg></div>
-                <div><h3 class="font-semibold text-sm text-[var(--subtext-light)] dark:text-[var(--subtext-dark)]">Avg. Area (px²)</h3><p id="stat-avg-area" class="text-2xl font-bold">0</p></div>
-            </div>
-             <div class="card bg-[var(--card-light)] dark:bg-[var(--card-dark)] p-4 rounded-xl border border-[var(--border-light)] dark:border-[var(--border-dark)] shadow-sm flex items-center gap-4">
-                <div class="bg-indigo-50 dark:bg-indigo-900/50 p-3 rounded-lg"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg></div>
-                <div><h3 class="font-semibold text-sm text-[var(--subtext-light)] dark:text-[var(--subtext-dark)]">Last Analysis</h3><p id="stat-last-analysis" class="text-2xl font-bold">N/A</p></div>
-            </div>
-        </section>
-
-        <!-- Main Dashboard Layout -->
-        <main class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            
-            <!-- Left Panel: Map & AI Insights -->
-            <div class="lg:col-span-2 flex flex-col gap-6">
-                <div class="card bg-[var(--card-light)] dark:bg-[var(--card-dark)] p-4 rounded-xl border border-[var(--border-light)] dark:border-[var(--border-dark)] shadow-md">
-                    <h3 class="font-bold text-center text-lg mb-2">Geospatial Distribution of Samples</h3>
-                    <div class="h-[450px]"><canvas id="map-chart"></canvas></div>
+    <div class="min-h-screen">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <header class="flex flex-col sm:flex-row justify-between items-center mb-8 pb-4 border-b border-sky-100 dark:border-slate-700">
+                <div>
+                    <h1 class="text-3xl font-bold tracking-tight">CMLRE Dashboard</h1>
+                    <p class="mt-1 text-sm subtext">AI-Enabled Oceanographic Data Platform</p>
                 </div>
-                <!-- GEMINI API INSIGHTS CARD -->
-                <div class="card bg-[var(--card-light)] dark:bg-[var(--card-dark)] p-6 rounded-xl border border-[var(--border-light)] dark:border-[var(--border-dark)] shadow-md">
-                    <div class="flex justify-between items-center mb-4">
-                        <h3 class="font-bold text-lg">AI-Generated Insights</h3>
-                        <button id="generate-insights-btn" class="bg-green-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-green-700 transition shadow-md disabled:bg-slate-400">Generate Summary</button>
-                    </div>
-                    <div id="insights-content" class="text-[var(--subtext-light)] dark:text-[var(--subtext-dark)] prose prose-sm dark:prose-invert">
-                        <p>Click "Generate Summary" to get an AI-powered analysis of the current dataset.</p>
-                    </div>
+                <div class="flex items-center gap-4 mt-4 sm:mt-0">
+                    <button id="refreshBtn" class="bg-sky-500 hover:bg-sky-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition-transform transform hover:scale-105">Refresh Dashboard</button>
+                    <button id="submitBtn" class="bg-emerald-500 hover:bg-emerald-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition-transform transform hover:scale-105">Analyze New Sample</button>
+                    <button id="darkModeToggle" class="p-2 rounded-full bg-slate-200 dark:bg-slate-700">
+                        <svg class="h-6 w-6 text-slate-600 dark:text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+                        </svg>
+                    </button>
+                </div>
+            </header>
+
+            <div id="statusBar" class="hidden text-center text-sm font-medium p-2 mb-6 rounded-md"></div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <div class="card p-5 rounded-xl shadow-lg flex items-center gap-5">
+                    <div class="bg-blue-50 text-blue-500 dark:bg-blue-900/50 dark:text-blue-300 rounded-full p-3"><svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2a4 4 0 00-4-4H3V9h2a4 4 0 004-4V3l5 4-5 4z"></path></svg></div>
+                    <div><p class="text-sm font-medium subtext">Total Samples</p><p id="totalSamples" class="text-3xl font-bold">0</p></div>
+                </div>
+                <div class="card p-5 rounded-xl shadow-lg flex items-center gap-5">
+                    <div class="bg-green-50 text-green-500 dark:bg-green-900/50 dark:text-green-300 rounded-full p-3"><svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 18.343A8 8 0 016.343 7.029m11.314 11.314A8 8 0 007.029 6.343m11.314 11.314L6.343 7.029"></path></svg></div>
+                    <div><p class="text-sm font-medium subtext">Unique Species</p><p id="uniqueSpecies" class="text-3xl font-bold">0</p></div>
+                </div>
+                <div class="card p-5 rounded-xl shadow-lg flex items-center gap-5">
+                    <div class="bg-amber-50 text-amber-500 dark:bg-amber-900/50 dark:text-amber-300 rounded-full p-3"><svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 1v4m0 0h-4m4 0l-5-5"></path></svg></div>
+                    <div><p class="text-sm font-medium subtext">Avg. Area (µm²)</p><p id="avgArea" class="text-3xl font-bold">0</p></div>
+                </div>
+                <div class="card p-5 rounded-xl shadow-lg flex items-center gap-5">
+                    <div class="bg-purple-50 text-purple-500 dark:bg-purple-900/50 dark:text-purple-300 rounded-full p-3"><svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 10l-2 1m0 0l-2-1m2 1v2.5M20 7l-2 1m2-1l-2-1m2 1v2.5M12 21a9 9 0 110-18 9 9 0 010 18z"></path></svg></div>
+                    <div><p class="text-sm font-medium subtext">Avg. Aspect Ratio</p><p id="avgAspectRatio" class="text-3xl font-bold">0.00</p></div>
                 </div>
             </div>
 
-            <!-- Right Panel: Data Table & Charts -->
-            <div class="lg:col-span-1 flex flex-col gap-6">
-                <div class="card bg-[var(--card-light)] dark:bg-[var(--card-dark)] p-4 rounded-xl border border-[var(--border-light)] dark:border-[var(--border-dark)] shadow-md">
-                    <h3 class="font-bold mb-2 text-center">Analyzed Samples</h3>
-                    <div class="overflow-y-auto h-64 border rounded-lg">
-                        <table class="w-full text-sm text-left"><thead class="text-xs uppercase bg-slate-100 dark:bg-slate-800 sticky top-0"><tr><th class="px-4 py-2">Species</th><th class="px-4 py-2">Area</th><th class="px-4 py-2">Aspect Ratio</th></tr></thead><tbody id="data-table-body"></tbody></table>
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="lg:col-span-2 flex flex-col gap-6">
+                    <div class="card p-5 rounded-xl shadow-lg">
+                        <h3 class="font-bold text-lg mb-4">Sample Collection Sites</h3>
+                        <div class="chart-container"><canvas id="mapChart"></canvas></div>
+                    </div>
+                    <div class="card p-5 rounded-xl shadow-lg">
+                        <h3 class="font-bold text-lg mb-4">Analysis Results</h3>
+                        <div class="table-container">
+                            <table class="w-full text-sm text-left">
+                                <thead class="sticky top-0 bg-sky-50 dark:bg-slate-900"><tr class="border-b dark:border-slate-700"><th class="p-2 font-semibold">ID</th><th class="p-2 font-semibold">Species (AI)</th><th class="p-2 font-semibold">Area</th><th class="p-2 font-semibold">Perimeter</th><th class="p-2 font-semibold">Aspect Ratio</th></tr></thead>
+                                <tbody id="resultsTableBody"></tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
-                <div class="card bg-[var(--card-light)] dark:bg-[var(--card-dark)] p-4 rounded-xl border border-[var(--border-light)] dark:border-[var(--border-dark)] shadow-md">
-                    <h3 class="font-bold text-center mb-2">Species Distribution</h3>
-                    <div class="h-48"><canvas id="species-chart"></canvas></div>
-                </div>
-                <div class="card bg-[var(--card-light)] dark:bg-[var(--card-dark)] p-4 rounded-xl border border-[var(--border-light)] dark:border-[var(--border-dark)] shadow-md">
-                    <h3 class="font-bold text-center mb-2">Area vs. Perimeter</h3>
-                    <div class="h-48"><canvas id="scatter-plot"></canvas></div>
+                
+                <div class="lg:col-span-1 flex flex-col gap-6">
+                    <div class="card p-5 rounded-xl shadow-lg">
+                        <h3 class="font-bold text-lg mb-4">Species Distribution</h3>
+                        <div class="chart-container"><canvas id="speciesChart"></canvas></div>
+                    </div>
+                    <div class="card p-5 rounded-xl shadow-lg">
+                        <h3 class="font-bold text-lg mb-2">AI Generated Insights</h3>
+                        <p class="text-xs subtext mb-4">Powered by Google Gemini</p>
+                        <div id="insightsContainer" class="text-sm space-y-2 min-h-[150px]">Click "Generate Summary" to get an AI analysis of the current data.</div>
+                        <button id="insightsBtn" class="mt-4 w-full bg-slate-700 hover:bg-slate-800 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition-transform transform hover:scale-105">Generate Summary</button>
+                    </div>
                 </div>
             </div>
-        </main>
+        </div>
     </div>
 
     <script>
-    document.addEventListener('DOMContentLoaded', async function () {
-        // --- STATE & CONFIG ---
-        let allData = [];
-        let charts = {};
-        const speciesColors = {};
-        const colorPalette = ['#3b82f6', '#10b981', '#ef4444', '#eab308', '#a855f7', '#f97316'];
-        const sampleOtolithBase64 = 'iVBORw0KGgoAAAANSUhEUgAAAGAAAAA8CAYAAAD2a2KkAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAGVSURBVHhe7dJBCsNADADBi/T/d7ZDIgo+sRQEkl3b2Y//AY6gQBYkQRYkQRYkQRYkQRYkQRYkQRYkQRYkQRYkQRYkQRYkQRYkQRYkQRYkQRYkQRYkQRYkQRYkQRYkQRYkQRYkQRYkQRYkQRYkQRYkQRYkQRYkQRYkQRYkQRYkQRYkQRYkQRYkQRYkQRYkQRYkQRYkQRYkQRYkQRYkQRYkQRYkQRYkQRYkQRYkQRYkQRYkQRYkQRYkQRYkQRYkQRYkQRYkQRYkQRYkQRYkQRYkQRYkQRYkQRYkQRYkQRYkQRYkQRYkQRYkQRYkQRYkQRYkQRYkQRYkQRYkQRYkQRYkQRYkQRYkQRYkQRYkQRYkQRYkQRYkQRYkQRYkQRYkQRYkQRYkQRYkQRYkQRYkQRYkQRYkQRYkQRYkQRYkQRYkQRYkQRYkQRYkQRYkQRYkQRa8A3oDk/oBEJt3AAAAAElFTSuQmCC';
+        document.addEventListener('DOMContentLoaded', () => {
+            const API_BASE_URL = 'http://localhost:8000';
+            const submitBtn = document.getElementById('submitBtn');
+            const refreshBtn = document.getElementById('refreshBtn');
+            const insightsBtn = document.getElementById('insightsBtn');
+            const darkModeToggle = document.getElementById('darkModeToggle');
+            const statusBar = document.getElementById('statusBar');
 
-        // --- DOM ELEMENTS ---
-        const darkModeToggle = document.getElementById('dark-mode-toggle');
-        const submitBtn = document.getElementById('submit-otolith');
-        const insightsBtn = document.getElementById('generate-insights-btn');
-        const statusDiv = document.getElementById('ingestion-status');
-        const insightsContent = document.getElementById('insights-content');
+            let mapChart, speciesChart;
+            let allData = [];
 
-        // --- MAP SETUP ---
-        const world = await fetch('https://unpkg.com/world-atlas/countries-110m.json').then(r => r.json());
-        const countries = ChartGeo.topojson.feature(world, world.objects.countries).features;
+            const showStatus = (message, isError = false) => {
+                statusBar.textContent = message;
+                statusBar.className = `text-center text-sm font-medium p-2 mb-6 rounded-md border ${isError ? 'bg-red-100 dark:bg-red-900 border-red-200 dark:border-red-800 text-red-700 dark:text-red-200' : 'bg-sky-100 dark:bg-sky-900 border-sky-200 dark:border-sky-800 text-sky-700 dark:text-sky-200'}`;
+                statusBar.classList.remove('hidden');
+            };
 
-        // --- HELPER FUNCTIONS ---
-        const getSpeciesColor = (species) => {
-            if (!species) return '#9ca3af';
-            if (!speciesColors[species]) {
-                speciesColors[species] = colorPalette[Object.keys(speciesColors).length % colorPalette.length];
-            }
-            return speciesColors[species];
-        };
-        const showStatus = (message, isError = false) => {
-            statusDiv.textContent = message;
-            statusDiv.className = `text-center mb-6 h-6 font-semibold ${isError ? 'text-red-500' : 'text-green-600'}`;
-            setTimeout(() => statusDiv.textContent = '', 5000);
-        };
-        
-        // --- GEMINI API FUNCTION ---
-        async function generateInsights() {
-            if (allData.length === 0) {
-                insightsContent.innerHTML = `<p class="text-yellow-500">Not enough data. Please analyze at least one sample.</p>`;
-                return;
-            }
-            insightsBtn.disabled = true;
-            insightsContent.innerHTML = `<div class="flex items-center gap-2"><div class="spinner w-5 h-5 border-2 border-transparent rounded-full animate-spin"></div><span>Generating AI summary...</span></div>`;
+            const toggleDarkMode = () => {
+                document.documentElement.classList.toggle('dark');
+                if (allData.length > 0) renderCharts();
+            };
 
-            const speciesCounts = allData.reduce((acc, d) => {
-                if(d.predicted_species && d.predicted_species !== 'N/A') {
-                    acc[d.predicted_species] = (acc[d.predicted_species] || 0) + 1;
-                }
-                return acc;
-            }, {});
-
-            const summaryData = {
-                total_samples: allData.length,
-                unique_species_count: Object.keys(speciesCounts).length,
-                species_distribution: speciesCounts,
-                average_area: (allData.reduce((sum, d) => sum + d.area_px, 0) / allData.length).toFixed(2)
+            const renderStatCards = () => {
+                document.getElementById('totalSamples').textContent = allData.length;
+                const speciesSet = new Set(allData.map(d => d.predicted_species).filter(Boolean));
+                document.getElementById('uniqueSpecies').textContent = speciesSet.size;
+                const totalArea = allData.reduce((sum, d) => sum + (d.area || 0), 0);
+                document.getElementById('avgArea').textContent = allData.length > 0 ? (totalArea / allData.length).toFixed(0) : '0';
+                const totalAspectRatio = allData.reduce((sum, d) => sum + (d.aspect_ratio || 0), 0);
+                document.getElementById('avgAspectRatio').textContent = allData.length > 0 ? (totalAspectRatio / allData.length).toFixed(2) : '0.00';
             };
             
-            const systemPrompt = "You are a world-class marine biologist and data analyst. Your task is to provide a concise, insightful summary based on otolith sample data. Focus on biodiversity, dominant species, and any potential morphological patterns. Format your response using markdown bullet points.";
-            const userQuery = `Analyze the following summary of otolith data and provide a 3-bullet point summary of the key findings. Data: ${JSON.stringify(summaryData)}`;
-            const apiKey = ""; // Canvas will provide this
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+            const renderTable = () => {
+                const tableBody = document.getElementById('resultsTableBody');
+                tableBody.innerHTML = allData.map(d => `
+                    <tr class="border-t border-sky-100 dark:border-slate-700">
+                        <td class="p-2">${d.image_id.substring(0, 12)}...</td><td class="p-2 font-medium">${d.predicted_species || 'N/A'}</td>
+                        <td class="p-2">${d.area || 'N/A'}</td><td class="p-2">${d.perimeter || 'N/A'}</td>
+                        <td class="p-2">${(d.aspect_ratio || 0).toFixed(2)}</td></tr>`).join('');
+            };
 
-            try {
-                const response = await fetch(apiUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contents: [{ parts: [{ text: userQuery }] }],
-                        systemInstruction: { parts: [{ text: systemPrompt }] }
-                    })
+            const renderCharts = async () => {
+                if (mapChart) mapChart.destroy();
+                if (speciesChart) speciesChart.destroy();
+                if (allData.length === 0) return;
+
+                const isDark = document.documentElement.classList.contains('dark');
+                const textColor = isDark ? '#e2e8f0' : '#0c4a6e';
+                
+                const speciesCounts = allData.reduce((acc, d) => {
+                    if (d.predicted_species) acc[d.predicted_species] = (acc[d.predicted_species] || 0) + 1;
+                    return acc;
+                }, {});
+                
+                const speciesCtx = document.getElementById('speciesChart').getContext('2d');
+                speciesChart = new Chart(speciesCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: Object.keys(speciesCounts),
+                        datasets: [{ data: Object.values(speciesCounts), backgroundColor: ['#38bdf8', '#34d399', '#facc15', '#a78bfa', '#f472b6'], borderColor: isDark ? 'var(--card-dark)' : 'var(--card-light)', borderWidth: 4 }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: textColor } } } }
                 });
 
-                if (!response.ok) throw new Error(`API Error: ${response.statusText}`);
+                const mapCtx = document.getElementById('mapChart').getContext('2d');
+                try {
+                    const res = await fetch('https://unpkg.com/world-atlas/countries-50m.json');
+                    if (!res.ok) throw new Error('Failed to load map data');
+                    const world = await res.json();
+                    const land = ChartGeo.topojson.feature(world, world.objects.land).features;
+                    
+                    mapChart = new Chart(mapCtx, {
+                        type: 'bubbleMap',
+                        data: {
+                            labels: allData.map(d => d.predicted_species),
+                            datasets: [{ outline: land, data: allData.map(d => ({ latitude: d.latitude, longitude: d.longitude, value: d.area / 100 })), backgroundColor: '#38bdf8' }]
+                        },
+                        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { xy: { projection: 'equalEarth' } } }
+                    });
+                } catch (error) { console.error("Map rendering failed:", error); }
+            };
 
-                const result = await response.json();
-                const text = result.candidates?.[0]?.content?.parts?.[0]?.text;
-                
-                if (text) {
-                    const formattedText = text
-                        .replace(/\*/g, '') // Remove asterisks
-                        .split('\n')
-                        .filter(line => line.trim() !== '')
-                        .map(line => `<li>${line}</li>`)
-                        .join('');
-                    insightsContent.innerHTML = `<ul class="list-disc pl-5 space-y-1">${formattedText}</ul>`;
-                } else {
-                    throw new Error("No text content in API response.");
+            const fetchDashboardData = async () => {
+                try {
+                    const response = await fetch(`${API_BASE_URL}/api/dashboard/data`);
+                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                    const data = await response.json();
+                    allData = data;
+                    renderStatCards();
+                    renderTable();
+                    renderCharts();
+                } catch (error) {
+                    console.error('Error fetching dashboard data:', error);
+                    showStatus('Could not load dashboard data from the server. Is the backend running?', true);
                 }
-            } catch (error) {
-                console.error("Gemini API Error:", error);
-                insightsContent.innerHTML = `<p class="text-red-500">Failed to generate AI summary. Please try again.</p>`;
-            } finally {
-                insightsBtn.disabled = false;
-            }
-        }
+            };
 
-        // --- RENDERING FUNCTIONS ---
-        function renderStatCards() {
-            // (Identical to previous version)
-            const speciesCount = new Set(allData.map(d => d.predicted_species).filter(s => s && s !== 'N/A')).size;
-            const avgArea = allData.length ? (allData.reduce((acc, d) => acc + d.area_px, 0) / allData.length).toFixed(0) : 0;
-            const lastAnalysis = allData.length ? new Date(allData[0].analysis_timestamp).toLocaleTimeString() : 'N/A';
-            document.getElementById('stat-total-samples').textContent = allData.length;
-            document.getElementById('stat-species-count').textContent = speciesCount;
-            document.getElementById('stat-avg-area').textContent = avgArea;
-            document.getElementById('stat-last-analysis').textContent = lastAnalysis;
-        }
+            const submitSample = async () => {
+                const imageId = `sample-otolith-${Date.now()}`;
+                const sampleOtolithBase64 = "iVBORw0KGgoAAAANSUhEUgAAAGAAAABgCAYAAADimHc4AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAALiIAAC4iAari3ZIAAAHNSURBVHhe7dixTkJBFEbhD18gIgaJkUijaGRAZ4CiC4gkxcY0pC1JAY0tYAEH4ACwpCwJDRpERQNo2BgTNIFRg4kBMnlB4n/mB16a2Z35v9k3s59whQoVOrw+F9z6vD4XmF7fL37w5/VL32/d8TevP/d8wB/8+b43PK//nlv4l8y/P/91/s+L3/nwB7/56y/vl/6/BQD8v5sF+NkLAuBnbQiAn7UgAH7WggD4WQsC4GctCIDf/l386Pcr/28JAGB/LQgA/LwFAXBaswD4WQsC4GctCIDf/i0A4GctCICsLQGAf0gLAuBnbQiAn7UgAH7WggD4GgBgLQiA3/4d/ej3K/9vCQBgf1sQAPh5CgLgtGYB8LMWAuBnbQiA3/4tAMA+LQiArC0BgH9ICgLgZ20IgJ+1IChY/v0tAH7WggD4WQsC4GctCIB/SAYAYC0IgJ+1IAC+BgBYCwLgZy0IgJ+1IAC+BgB4v7YgAH7WggD4WQsC4GctCICsLQiAn7UgAH7WggD4WQsC4GctCICvtYEA+FkLAuBnbQiAn7UgAH7WggD4WQuB3/4d/ej3K/9vCQB4//oV+qV3gUKFCp0/rw+hTwA2H2qLRMdWbAAAAABJRU5ErkJggg==";
 
-        function renderTable() {
-            // (Identical to previous version)
-            const tableBody = document.getElementById('data-table-body');
-            tableBody.innerHTML = allData.map(item => `<tr class="border-b border-[var(--border-light)] dark:border-[var(--border-dark)] hover:bg-slate-50 dark:hover:bg-slate-700/50 cursor-pointer" data-id="${item.image_id}"><td class="px-4 py-2 font-medium" style="color: ${getSpeciesColor(item.predicted_species)}">${item.predicted_species}</td><td class="px-4 py-2">${item.area_px.toFixed(0)}</td><td class="px-4 py-2">${item.aspect_ratio}</td></tr>`).join('');
-        }
+                try {
+                    submitBtn.disabled = true;
+                    submitBtn.textContent = "Analyzing...";
+                    showStatus(`Submitting ${imageId.substring(0, 20)}...`);
+                    
+                    const response = await fetch(`${API_BASE_URL}/api/ingest/otolith`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ image_data: sampleOtolithBase64, image_id: imageId })
+                    });
+                    
+                    if (!response.ok) throw new Error('Submission failed');
+                    
+                    showStatus('Analysis in progress... Refreshing in 5s.');
+                    setTimeout(fetchDashboardData, 5000);
 
-        function renderCharts() {
-            const isDarkMode = document.documentElement.classList.contains('dark');
-            const gridColor = isDarkMode ? 'rgba(100, 116, 139, 0.3)' : 'rgba(203, 213, 225, 0.5)';
-            const textColor = isDarkMode ? '#e2e8f0' : '#020617';
+                } catch (error) {
+                    console.error('Submission error:', error);
+                    showStatus('Submission failed. Please try again.', true);
+                } finally {
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = "Analyze New Sample";
+                }
+            };
+            
+            const generateInsights = async () => {
+                const insightsContainer = document.getElementById('insightsContainer');
+                try {
+                    insightsBtn.disabled = true;
+                    insightsContainer.innerHTML = '<div class="pulse-loader bg-slate-200 dark:bg-slate-700 h-4 rounded-md w-full"></div><div class="pulse-loader bg-slate-200 dark:bg-slate-700 h-4 rounded-md w-3/4"></div>';
 
-            // Map Chart
-            if (charts.map) charts.map.destroy();
-            const mapCtx = document.getElementById('map-chart').getContext('2d');
-            charts.map = new Chart(mapCtx, { type: 'bubbleMap', data: { labels: allData.map(d => d.image_id), datasets: [{ label: 'Samples', outline: countries, data: allData.map(d => ({...d, value: d.area_px})), backgroundColor: allData.map(d => getSpeciesColor(d.predicted_species)), }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { xy: { projection: 'equalEarth' }, r: { range: [3, 15] } } } });
+                    const speciesCounts = allData.reduce((acc, d) => {
+                        if (d.predicted_species) { acc[d.predicted_species] = (acc[d.predicted_species] || 0) + 1; }
+                        return acc;
+                    }, {});
 
-            // Species Bar Chart
-            const speciesCounts = allData.reduce((acc, d) => { if(d.predicted_species !== 'N/A') acc[d.predicted_species] = (acc[d.predicted_species] || 0) + 1; return acc; }, {});
-            if (charts.species) charts.species.destroy();
-            const speciesCtx = document.getElementById('species-chart').getContext('2d');
-            charts.species = new Chart(speciesCtx, {
-                type: 'doughnut',
-                data: {
-                    labels: Object.keys(speciesCounts),
-                    datasets: [{
-                        data: Object.values(speciesCounts),
-                        backgroundColor: Object.keys(speciesCounts).map(s => getSpeciesColor(s)),
-                        borderWidth: 2,
-                        borderColor: isDarkMode ? '#27272a' : '#fff'
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false }
+                    if(Object.keys(speciesCounts).length === 0) {
+                        insightsContainer.innerHTML = 'No data available to generate insights.';
+                        insightsBtn.disabled = false;
+                        return;
                     }
+
+                    const dataSummary = `Total samples: ${allData.length}. Species counts: ${JSON.stringify(speciesCounts)}. Average area: ${document.getElementById('avgArea').textContent} µm². Average aspect ratio: ${document.getElementById('avgAspectRatio').textContent}.`;
+                    
+                    const systemPrompt = "You are a marine biologist. Based on the following summary of otolith analysis data, provide a concise, one-paragraph insight. Focus on the species distribution and any potential patterns. Be brief and clear.";
+                    const userQuery = `Analyze this data: ${dataSummary}`;
+                    const apiKey = ""; 
+                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+
+                    const payload = {
+                        contents: [{ parts: [{ text: userQuery }] }],
+                        systemInstruction: { parts: [{ text: systemPrompt }] },
+                    };
+
+                    const response = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                    if (!response.ok) throw new Error('Gemini API request failed');
+
+                    const result = await response.json();
+                    const text = result.candidates?.[0]?.content?.parts?.[0]?.text;
+                    insightsContainer.innerHTML = text || 'Could not generate insights.';
+                } catch (error) {
+                    console.error('Error generating insights:', error);
+                    insightsContainer.innerHTML = 'Failed to generate AI insights. Please check the console for details.';
+                } finally {
+                    insightsBtn.disabled = false;
                 }
-            });
+            };
 
-            // Scatter Plot
-            if (charts.scatter) charts.scatter.destroy();
-            const scatterCtx = document.getElementById('scatter-plot').getContext('2d');
-            charts.scatter = new Chart(scatterCtx, {
-                type: 'scatter',
-                data: {
-                    datasets: allData.map(d => ({
-                        label: d.predicted_species,
-                        data: [{ x: d.area_px, y: d.perimeter_px }],
-                        backgroundColor: getSpeciesColor(d.predicted_species),
-                    }))
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        x: { type: 'linear', position: 'bottom', title: { display: true, text: 'Area (px²)', color: textColor, font: {size: 10} }, grid: { color: gridColor }, ticks: { color: textColor } },
-                        y: { title: { display: true, text: 'Perimeter (px)', color: textColor, font: {size: 10} }, grid: { color: gridColor }, ticks: { color: textColor } }
-                    },
-                    plugins: {
-                        legend: { display: false }
-                    }
-                }
-            });
-        }
+            submitBtn.addEventListener('click', submitSample);
+            refreshBtn.addEventListener('click', fetchDashboardData);
+            insightsBtn.addEventListener('click', generateInsights);
+            darkModeToggle.addEventListener('click', toggleDarkMode);
 
-        async function fetchDashboardData() {
-            try {
-                const response = await fetch('/api/dashboard/data');
-                if (!response.ok) throw new Error('Network response was not ok');
-                const data = await response.json();
-                allData = data;
-                renderAll();
-            } catch (e) { console.error("Failed to fetch dashboard data:", e); showStatus("Could not load dashboard data.", true); }
-        }
-
-        const renderAll = () => {
-            renderStatCards();
-            renderTable();
-            renderCharts();
-        };
-
-        submitBtn.addEventListener('click', async () => {
-            const imageId = `sample-otolith-${Date.now()}`;
-            showStatus(`Submitting ${imageId.substring(0,20)}...`);
-            submitBtn.disabled = true;
-            submitBtn.textContent = "Analyzing...";
-            try {
-                await fetch('/api/ingest/otolith', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ image_data: sampleOtolithBase64, image_id: imageId }) });
-                showStatus('Analysis in progress... Refreshing in 5s.');
-                setTimeout(fetchDashboardData, 5000);
-            } catch (e) { showStatus('Submission failed.', true); } finally { submitBtn.disabled = false; submitBtn.textContent = "Analyze New Sample"; }
+            fetchDashboardData();
         });
-        
-        darkModeToggle.addEventListener('click', () => {
-            document.documentElement.classList.toggle('dark');
-            renderCharts();
-        });
-
-        insightsBtn.addEventListener('click', generateInsights);
-
-        // --- INITIALIZATION ---
-        fetchDashboardData();
-    });
     </script>
 </body>
 </html>
-
