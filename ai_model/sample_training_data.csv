@@ -1,10 +1,13 @@
-area_px,perimeter_px,width_px,height_px,aspect_ratio,species
-1500,180,50,40,1.25,Gadus morhua
-1650,195,55,42,1.31,Gadus morhua
-1450,175,48,39,1.23,Gadus morhua
-2200,250,70,50,1.40,Pollachius virens
-2350,265,75,52,1.44,Pollachius virens
-2100,240,68,49,1.39,Pollachius virens
-950,120,30,25,1.20,Melanogrammus aeglefinus
-1050,135,35,28,1.25,Melanogrammus aeglefinus
-900,115,28,24,1.17,Melanogrammus aeglefinus
+area,perimeter,width,height,aspect_ratio,species
+2500,200,50,50,1.0,Gadus morhua
+2600,205,52,50,1.04,Gadus morhua
+2450,198,50,49,0.98,Gadus morhua
+3000,220,60,50,1.2,Melanogrammus aeglefinus
+3100,225,50,50,1.24,Melanogrammus aeglefinus
+2950,218,59,50,1.18,Melanogrammus aeglefinus
+1600,150,55,30,1.67,Pollachius virens
+1500,155,52,30.8,1.69,Pollachius virens
+1450,148,49,30.2,1.59,Pollachius virens
+2550,202,51,50,1.02,Gadus morhua
+3050,222,61,50,1.22,Melanogrammus aeglefinus
+1520,151,50.5,30.1,1.68,Pollachius virens

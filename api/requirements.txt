@@ -1,6 +1,6 @@
 fastapi
 uvicorn
-psycopg2-binary
-databases[postgresql]
-sqlalchemy
 pika
+psycopg2-binary
+sqlalchemy
+python-multipart

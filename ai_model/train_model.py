@@ -2,52 +2,42 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score
-import pickle
+import joblib
 import os
-
-# Define the path for the output model
-MODEL_DIR = "/app/model"
-MODEL_PATH = os.path.join(MODEL_DIR, "species_classifier.pkl")
-
-# Ensure the model directory exists
-os.makedirs(MODEL_DIR, exist_ok=True)
 
 print("--- Starting Model Training ---")
 
-# 1. Load the dataset
-try:
-    data = pd.read_csv("/app/data/sample_training_data.csv")
-    print("Successfully loaded training data.")
-    print("Data Head:\n", data.head())
-except FileNotFoundError:
-    print("Error: sample_training_data.csv not found. Make sure it's in the correct directory.")
+# Define the path for the output model
+output_model_path = 'species_classifier.pkl'
+data_path = 'sample_training_data.csv'
+
+# Check if data file exists
+if not os.path.exists(data_path):
+    print(f"Error: {data_path} not found. Make sure it's in the correct directory.")
     exit()
 
-# 2. Define features (X) and target (y)
-features = ['area_px', 'perimeter_px', 'width_px', 'height_px', 'aspect_ratio']
-target = 'species'
-X = data[features]
-y = data[target]
+# Load the dataset
+df = pd.read_csv(data_path)
 
-# 3. Split data into training and testing sets
+# Prepare the data
+X = df[['area', 'perimeter', 'width', 'height', 'aspect_ratio']]
+y = df['species']
+
+# Split data into training and testing sets
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-print(f"Data split: {len(X_train)} training samples, {len(X_test)} testing samples.")
 
-# 4. Initialize and train the classifier
-# RandomForest is a good general-purpose classifier
-classifier = RandomForestClassifier(n_estimators=100, random_state=42)
-print("Training RandomForestClassifier...")
-classifier.fit(X_train, y_train)
-print("Training complete.")
+# Initialize and train the classifier
+clf = RandomForestClassifier(n_estimators=100, random_state=42)
+clf.fit(X_train, y_train)
 
-# 5. Evaluate the model
-y_pred = classifier.predict(X_test)
+# Evaluate the model
+y_pred = clf.predict(X_test)
 accuracy = accuracy_score(y_test, y_pred)
-print(f"Model Accuracy on test data: {accuracy:.2f}")
+print(f"Model trained with accuracy: {accuracy:.2f}")
 
-# 6. Save the trained model to a file using pickle
-with open(MODEL_PATH, 'wb') as f:
-    pickle.dump(classifier, f)
-print(f"Model successfully saved to {MODEL_PATH}")
-print("--- Model Training Finished ---")
+# Save the trained model using joblib
+joblib.dump(clf, output_model_path)
+print(f"Model saved to {output_model_path}")
+print("--- Model Training Script Finished ---")
+
 
