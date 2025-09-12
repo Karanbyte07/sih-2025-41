@@ -1,4 +1,0 @@
-pika
-opencv-python-headless
-numpy
-psycopg2-binary
