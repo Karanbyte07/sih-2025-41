@@ -286,7 +286,7 @@
 
         async function fetchDashboardData() {
             try {
-                const response = await fetch('/api/dashboard/data');
+                const response = await fetch('/api/dashboard/data'); // No port needed, Nginx proxy handles it
                 if (!response.ok) throw new Error('Network response was not ok');
                 const data = await response.json();
                 allData = data;
@@ -306,7 +306,12 @@
             submitBtn.disabled = true;
             submitBtn.textContent = "Analyzing...";
             try {
-                await fetch('/api/ingest/otolith', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ image_data: sampleOtolithBase64, image_id: imageId }) });
+                // Use the proxied path
+                await fetch('/api/ingest/otolith', { 
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'application/json' }, 
+                    body: JSON.stringify({ image_data: sampleOtolithBase64, image_id: imageId }) 
+                });
                 showStatus('Analysis in progress... Refreshing in 5s.');
                 setTimeout(fetchDashboardData, 5000);
             } catch (e) { showStatus('Submission failed.', true); } finally { submitBtn.disabled = false; submitBtn.textContent = "Analyze New Sample"; }
@@ -325,4 +330,3 @@
     </script>
 </body>
 </html>
-

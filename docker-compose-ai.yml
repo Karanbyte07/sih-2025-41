@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   rabbitmq:
     image: rabbitmq:3.9-management-alpine
@@ -18,16 +16,10 @@ services:
 
   model-builder:
     build:
-      context: ./ai_model
-      dockerfile_inline: |
-        FROM python:3.9-slim
-        WORKDIR /app
-        COPY requirements.txt .
-        RUN pip install --no-cache-dir -r requirements.txt
-        COPY . .
+      context: .
+      dockerfile: ./ai_model/Dockerfile   # <-- you’ll need to create this file
     container_name: model_builder-ai
-    # This service runs once to train and save the model, then exits.
-    command: python train_model.py
+    command: python train_model.py   # runs once, trains the model
     volumes:
       - model_volume:/app/model
       - ./ai_model:/app/data
@@ -35,21 +27,16 @@ services:
 
   ai_worker:
     build:
-      context: ./workers
-      dockerfile_inline: |
-        FROM python:3.9-slim
-        WORKDIR /app
-        COPY requirements_ai.txt .
-        RUN pip install --no-cache-dir -r requirements_ai.txt
-        COPY ai_worker.py .
+      context: .
+      dockerfile: ./workers/Dockerfile.workers
     container_name: ai_worker-ai
     command: python ai_worker.py
     depends_on:
       - rabbitmq
       - db
-      - model-builder # Ensures model is built before this worker starts
+      - model-builder
     volumes:
-      - model_volume:/app/model # Mounts the trained model
+      - model_volume:/app/model
     networks: [cmlre_net_ai]
     environment:
       - RABBITMQ_HOST=rabbitmq
@@ -60,14 +47,8 @@ services:
 
   api:
     build:
-      context: ./api
-      dockerfile_inline: |
-        FROM python:3.9-slim
-        WORKDIR /app
-        COPY requirements_db.txt .
-        RUN pip install --no-cache-dir -r requirements_db.txt
-        COPY main_ai.py .
-        CMD ["uvicorn", "main_ai:app", "--host", "0.0.0.0", "--port", "8000"]
+      context: .
+      dockerfile: ./api/Dockerfile
     container_name: cmlre_api-ai
     ports: ["8001:8000"]
     depends_on: [rabbitmq, db]
@@ -81,13 +62,8 @@ services:
 
   workers:
     build:
-      context: ./workers
-      dockerfile_inline: |
-        FROM python:3.9-slim
-        WORKDIR /app
-        COPY requirements_ai.txt .
-        RUN pip install --no-cache-dir -r requirements_ai.txt
-        COPY otolith_worker_ai.py .
+      context: .
+      dockerfile: ./workers/Dockerfile.workers
     container_name: cmlre_workers-ai
     command: python otolith_worker_ai.py
     depends_on: [rabbitmq, db]

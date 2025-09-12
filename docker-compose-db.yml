@@ -1,4 +1,4 @@
-version: '3.8'
+version: '3.9'
 
 services:
   rabbitmq:
@@ -30,13 +30,7 @@ services:
   api:
     build:
       context: ./api
-      dockerfile_inline: |
-        FROM python:3.9-slim
-        WORKDIR /app
-        COPY requirements_db.txt .
-        RUN pip install --no-cache-dir -r requirements_db.txt
-        COPY main_db.py .
-        CMD ["uvicorn", "main_db:app", "--host", "0.0.0.0", "--port", "8000"]
+      dockerfile: Dockerfile
     container_name: cmlre_api
     ports:
       - "8000:8000"
@@ -55,14 +49,8 @@ services:
   workers:
     build:
       context: ./workers
-      dockerfile_inline: |
-        FROM python:3.9-slim
-        WORKDIR /app
-        COPY requirements_db.txt .
-        RUN pip install --no-cache-dir -r requirements_db.txt
-        COPY . .
+      dockerfile: Dockerfile.workers
     container_name: cmlre_workers
-    # We now run the db-enabled worker. The other workers could be run similarly.
     command: python otolith_worker_db.py
     depends_on:
       - rabbitmq
