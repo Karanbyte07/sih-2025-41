@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ocean Intelligence Platform Demo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #e0f2fe 0%, #b3e5fc 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .demo-card {
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            text-align: center;
+        }
+        
+        .ocean-title {
+            font-family: 'Kaushan Script', cursive;
+            color: #1e40af;
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .btn-ocean {
+            background: linear-gradient(135deg, #3b82f6, #1e40af);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            text-decoration: none;
+            display: inline-block;
+            margin: 10px;
+            transition: transform 0.2s;
+        }
+        
+        .btn-ocean:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(59, 130, 246, 0.3);
+        }
+        
+        .feature-list {
+            text-align: left;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+        
+        .feature-item {
+            display: flex;
+            align-items: center;
+            margin: 8px 0;
+            color: #64748b;
+        }
+        
+        .feature-icon {
+            color: #3b82f6;
+            margin-right: 8px;
+            width: 20px;
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Kaushan+Script&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="demo-card">
+        <div class="ocean-title">Ocean Intelligence</div>
+        <h2 class="text-2xl font-semibold text-gray-800 mb-4">Professional Marine Data Platform</h2>
+        <p class="text-gray-600 mb-6">Experience the complete frontend redesign with professional ocean aesthetics and Campus Chronicles inspired design.</p>
+        
+        <div class="feature-list mb-8">
+            <div class="feature-item">
+                <i class="fas fa-palette feature-icon"></i>
+                Professional ocean color theme
+            </div>
+            <div class="feature-item">
+                <i class="fas fa-font feature-icon"></i>
+                Kaushan Script elegant typography
+            </div>
+            <div class="feature-item">
+                <i class="fas fa-chart-line feature-icon"></i>
+                Interactive Chart.js visualizations
+            </div>
+            <div class="feature-item">
+                <i class="fas fa-water feature-icon"></i>
+                Ocean wave animations & effects
+            </div>
+            <div class="feature-item">
+                <i class="fas fa-code feature-icon"></i>
+                Clean HTML/CSS/JS separation
+            </div>
+            <div class="feature-item">
+                <i class="fas fa-mobile-alt feature-icon"></i>
+                Responsive TailwindCSS design
+            </div>
+        </div>
+        
+        <div>
+            <a href="index_final_professional.html" class="btn-ocean">
+                <i class="fas fa-rocket mr-2"></i>
+                Launch Ocean Platform
+            </a>
+            <a href="../api/dashboard/data" class="btn-ocean" style="background: linear-gradient(135deg, #10b981, #059669);">
+                <i class="fas fa-database mr-2"></i>
+                View API Data
+            </a>
+        </div>
+        
+        <div class="mt-8 text-sm text-gray-500">
+            <p>🌊 Built with professional design principles</p>
+            <p>🎨 Campus Chronicles color inspiration</p>
+            <p>⚡ Modern web technologies</p>
+        </div>
+    </div>
+</body>
+</html>
