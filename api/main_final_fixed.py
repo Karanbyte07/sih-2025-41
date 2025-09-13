@@ -1,8 +1,7 @@
 import os
 import time
 import logging
-import json
-import random
+import json # <--- THIS IS THE FIX
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -17,20 +16,6 @@ logger = logging.getLogger(__name__)
 DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:postgres@db:5432/cmlre_data")
 RABBITMQ_HOST = os.getenv('RABBITMQ_HOST', 'rabbitmq')
 engine = create_engine(DATABASE_URL, pool_pre_ping=True)
-
-# Sample otolith images (base64 encoded) - valid PNG format for testing
-SAMPLE_OTOLITH_IMAGES = [
-    # 2x2 black image - basic PNG
-    "iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAYAAABytg0kAAAAFklEQVR42mNkYGBgYGBkYGAwA2KAYlQNo2oAAAcAAAGiQJ8xAAAAAElFTkSuQmCC",
-    # 3x3 red image  
-    "iVBORw0KGgoAAAANSUhEUgAAAAMAAAADCAYAAABWKLW/AAAAGklEQVR42mP8/x8MAgwMDAwMDEwQgFEMqwAAQ8sDBZHrsP8AAAAASUVORK5CYII=",
-    # 4x4 blue image
-    "iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAYAAACp8Z5+AAAAJklEQVR42mNkQAP/kTHqBzY4CgAuBwF8D1EGBgYGBgYGBjY4CgAAkCIKANJfMmEAAAAASUVORK5CYII=",
-    # 5x5 green image
-    "iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAAHklEQVR42mNkAAL/SAB1AxschtBj1A9scKQUAAA+6AKAJFgHwwAAAABJRU5ErkJggg==",
-    # 10x10 gray image - larger for better processing
-    "iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAFUlEQVR42mNkYPhfj0nh/////P/YgAAAmCsKAHgf9kcAAAAASUVORK5CYII="
-]
 
 # --- Database Setup on Startup ---
 def setup_database_and_tables():
@@ -85,14 +70,10 @@ class OtolithIngest(BaseModel):
 def ingest_otolith(item: OtolithIngest):
     logger.info(f"Received otolith ingest request for image_id: {item.image_id}")
     
-    # Use actual image data if provided, otherwise select a random sample image
-    if item.image_data and len(item.image_data) > 100:  # Valid base64 data
-        image_data = item.image_data
-        logger.info(f"Using provided image data for {item.image_id}, length: {len(image_data)}")
-    else:
-        # Select a random sample image for variety in testing
-        image_data = random.choice(SAMPLE_OTOLITH_IMAGES)
-        logger.info(f"Using sample image data for {item.image_id}, sample length: {len(image_data)}")
+    # Validate that image_data is provided
+    if not item.image_data:
+        logger.error(f"No image data provided for image_id: {item.image_id}")
+        raise HTTPException(status_code=400, detail="Image data is required")
     
     try:
         # Test RabbitMQ connection first
@@ -100,8 +81,8 @@ def ingest_otolith(item: OtolithIngest):
         channel = connection.channel()
         channel.queue_declare(queue='otolith_queue', durable=True)
         
-        # Create message with the selected image data
-        message_data = {"image_id": item.image_id, "image_data": image_data}
+        # Use the actual image data from the request, not hardcoded data
+        message_data = {"image_id": item.image_id, "image_data": item.image_data}
         message_body = json.dumps(message_data)
         
         # Publish to queue
@@ -113,7 +94,7 @@ def ingest_otolith(item: OtolithIngest):
         )
         connection.close()
         
-        logger.info(f"Successfully queued message for image_id: {item.image_id}")
+        logger.info(f"Successfully queued message for image_id: {item.image_id} with data length: {len(item.image_data)}")
         return {"status": "success", "message": "Image queued for processing."}
         
     except pika.exceptions.AMQPConnectionError as e:

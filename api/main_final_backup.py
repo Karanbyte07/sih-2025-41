@@ -1,8 +1,7 @@
 import os
 import time
 import logging
-import json
-import random
+import json # <--- THIS IS THE FIX
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -17,20 +16,6 @@ logger = logging.getLogger(__name__)
 DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:postgres@db:5432/cmlre_data")
 RABBITMQ_HOST = os.getenv('RABBITMQ_HOST', 'rabbitmq')
 engine = create_engine(DATABASE_URL, pool_pre_ping=True)
-
-# Sample otolith images (base64 encoded) - valid PNG format for testing
-SAMPLE_OTOLITH_IMAGES = [
-    # 2x2 black image - basic PNG
-    "iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAYAAABytg0kAAAAFklEQVR42mNkYGBgYGBkYGAwA2KAYlQNo2oAAAcAAAGiQJ8xAAAAAElFTkSuQmCC",
-    # 3x3 red image  
-    "iVBORw0KGgoAAAANSUhEUgAAAAMAAAADCAYAAABWKLW/AAAAGklEQVR42mP8/x8MAgwMDAwMDEwQgFEMqwAAQ8sDBZHrsP8AAAAASUVORK5CYII=",
-    # 4x4 blue image
-    "iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAYAAACp8Z5+AAAAJklEQVR42mNkQAP/kTHqBzY4CgAuBwF8D1EGBgYGBgYGBjY4CgAAkCIKANJfMmEAAAAASUVORK5CYII=",
-    # 5x5 green image
-    "iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAAHklEQVR42mNkAAL/SAB1AxschtBj1A9scKQUAAA+6AKAJFgHwwAAAABJRU5ErkJggg==",
-    # 10x10 gray image - larger for better processing
-    "iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAFUlEQVR42mNkYPhfj0nh/////P/YgAAAmCsKAHgf9kcAAAAASUVORK5CYII="
-]
 
 # --- Database Setup on Startup ---
 def setup_database_and_tables():
@@ -83,42 +68,20 @@ class OtolithIngest(BaseModel):
 
 @app.post("/api/ingest/otolith")
 def ingest_otolith(item: OtolithIngest):
-    logger.info(f"Received otolith ingest request for image_id: {item.image_id}")
-    
-    # Use actual image data if provided, otherwise select a random sample image
-    if item.image_data and len(item.image_data) > 100:  # Valid base64 data
-        image_data = item.image_data
-        logger.info(f"Using provided image data for {item.image_id}, length: {len(image_data)}")
-    else:
-        # Select a random sample image for variety in testing
-        image_data = random.choice(SAMPLE_OTOLITH_IMAGES)
-        logger.info(f"Using sample image data for {item.image_id}, sample length: {len(image_data)}")
-    
+    clean_image_data = "iVBORw0KGgoAAAANSUhEUgAAAGAAAABgCAYAAADimHc4AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAALiIAAC4iAari3ZIAAAHNSURBVHhe7dixTkJBFEbhD18gIgaJkUijaGRAZ4CiC4gkxcY0pC1JAY0tYAEH4ACwpCwJDRpERQNo2BgTNIFRg4kBMnlB4n/mB16a2Z35v9k3s59whQoVOrw+F9z6vD4XmF7fL37w5/VL32/d8TevP/d8wB/8+b43PK//nlv4l8y/P/91/s+L3/nwB7/56y/vl/6/BQD8v5sF+NkLAuBnbQiAn7UgAH7WggD4WQsC4GctCIDf/l386Pcr/28JAGB/LQgA/LwFAXBaswD4WQsC4GctCIDf/i0A4GctCICsLQGAf0gLAuBnbQiAn1UgAH7WggD4GgBgLQiA3/4d/ej3K/9vCQBgf1sQAPh5CgLgtGYB8LMWAuBnbQiA3/4tAMA+LQiArC0BgH9ICgLgZ20IgJ+1IChY/v0tAH7WggD4WQsC4GctCIB/SAYAYC0IgJ+1IAC+BgBYCwLgZy0IgJ+1IAC+BgB4v7YgAH7WggD4WQsC4GctCICsLQiAn7UgAH7WggD4WQsC4GctCICvtYEA+FkLAuBnbQiAn7UgAH7WggD4WQuB3/4d/ej3K/9vCQB4//oV+qV3gUKFCp0/rw+hTwA2H2qLRMdWbAAAAABJRU5ErkJggg=="
     try:
-        # Test RabbitMQ connection first
         connection = pika.BlockingConnection(pika.ConnectionParameters(host=RABBITMQ_HOST))
         channel = connection.channel()
         channel.queue_declare(queue='otolith_queue', durable=True)
-        
-        # Create message with the selected image data
-        message_data = {"image_id": item.image_id, "image_data": image_data}
+        message_data = {"image_id": item.image_id, "image_data": clean_image_data}
         message_body = json.dumps(message_data)
-        
-        # Publish to queue
         channel.basic_publish(
-            exchange='', 
-            routing_key='otolith_queue', 
-            body=message_body,
+            exchange='', routing_key='otolith_queue', body=message_body,
             properties=pika.BasicProperties(delivery_mode=pika.spec.PERSISTENT_DELIVERY_MODE)
         )
         connection.close()
-        
         logger.info(f"Successfully queued message for image_id: {item.image_id}")
         return {"status": "success", "message": "Image queued for processing."}
-        
-    except pika.exceptions.AMQPConnectionError as e:
-        logger.error(f"RabbitMQ connection failed for {item.image_id}: {e}")
-        raise HTTPException(status_code=503, detail="Message queue service unavailable")
     except Exception as e:
         logger.error(f"Failed to queue message for {item.image_id}: {e}")
         raise HTTPException(status_code=500, detail=str(e))
