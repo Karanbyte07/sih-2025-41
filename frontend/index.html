@@ -1,0 +1,1461 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ocean Intelligence Platform - CMLRE</title>
+    
+    <!-- External Libraries -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Kaushan+Script&family=Poppins:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Dancing+Script:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Custom Styles -->
+2    <link rel="stylesheet" href="assets/css/ocean-theme.css?v=4">
+    <link rel="stylesheet" href="assets/css/animations.css?v=4">
+    <link rel="stylesheet" href="assets/css/homepage.css?v=4">
+    <link rel="stylesheet" href="assets/css/navbar.css?v=8">
+    
+    <!-- Enhanced Styles -->
+    <style>
+        /* Script font class */
+        .script-font {
+            font-family: 'Kaushan Script', cursive;
+            font-weight: 400;
+            letter-spacing: 0.02em;
+        }
+        .kaushan-script {
+            font-family: 'Kaushan Script', cursive;
+        }
+        
+        /* Body spacing for fixed navbar */
+        body {
+            padding-top: 94px !important;
+            margin: 0 !important;
+            background: linear-gradient(135deg, #f0f8ff 0%, #ffffff 25%, #e6f3ff 50%, #ffffff 75%, #f0f8ff 100%);
+            min-height: 100vh;
+            background-attachment: fixed;
+        }
+        
+        /* Fix hero section to account for navbar */
+        .ocean-hero {
+            min-height: calc(100vh - 94px) !important;
+            margin-top: -94px !important;
+            padding-top: 140px !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+        }
+        
+        /* Wave positioning adjustments */
+        .wave-animation {
+            position: absolute !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            overflow: hidden !important;
+            z-index: 1 !important;
+        }
+        
+        .wave-svg {
+            position: absolute !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            height: 150px !important;
+            overflow: hidden !important;
+        }
+        
+        .wave-svg svg {
+            width: calc(100% + 1.3px) !important;
+            height: 150px !important;
+        }
+        
+        .wave-bottom {
+            position: absolute !important;
+            bottom: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            height: 150px !important;
+            overflow: hidden !important;
+        }
+        
+        .wave-bottom svg {
+            width: calc(100% + 1.3px) !important;
+            height: 150px !important;
+            fill: #ffffff !important;
+        }
+        
+        /* Clean Flip Card System - Single Layer Only */
+        .stat-item {
+            background: transparent !important;
+            border: none !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            position: relative !important;
+            height: 160px !important;
+            width: 100% !important;
+            max-width: 320px !important;
+            perspective: 1000px !important;
+        }
+        
+        .flip-card {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.25), rgba(255, 255, 255, 0.15)) !important;
+            border-radius: 12px !important;
+            backdrop-filter: blur(15px) !important;
+            border: 1px solid rgba(255, 255, 255, 0.3) !important;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1), 
+                        inset 0 1px 0 rgba(255, 255, 255, 0.6) !important;
+            transition: box-shadow 0.3s ease !important;
+            transform-style: preserve-3d;
+        }
+        
+        .flip-card:hover {
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15), 
+                        inset 0 1px 0 rgba(255, 255, 255, 0.7),
+                        0 0 20px rgba(59, 130, 246, 0.2) !important;
+        }
+        
+        .flip-card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.6s ease-in-out;
+            transform-style: preserve-3d;
+            cursor: pointer;
+            transform: rotateY(0deg);
+        }
+        
+        .flip-card:hover .flip-card-inner {
+            transform: rotateY(180deg);
+        }
+        
+        .flip-card-front, .flip-card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            background: transparent !important;
+            border: none !important;
+            box-shadow: none !important;
+            display: flex !important;
+            flex-direction: column !important;
+            justify-content: center !important;
+            align-items: center !important;
+            padding: 1.5rem 1rem !important;
+            box-sizing: border-box !important;
+        }
+        
+        .flip-card-front {
+            transform: rotateY(0deg);
+            z-index: 2;
+        }
+        
+        .flip-card-back {
+            transform: rotateY(180deg);
+            z-index: 1;
+        }
+        
+        .flip-content {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            text-align: center;
+            position: relative;
+            z-index: 2;
+        }
+        
+        .flip-title {
+            font-family: 'Inter', sans-serif !important;
+            font-size: 1.1rem !important;
+            font-weight: 700 !important;
+            color: rgba(255, 255, 255, 0.95) !important;
+            text-transform: uppercase !important;
+            letter-spacing: 0.5px !important;
+            margin-bottom: 0.5rem !important;
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3) !important;
+            line-height: 1.2 !important;
+        }
+        
+        .flip-description {
+            font-family: 'Inter', sans-serif !important;
+            font-size: 0.85rem !important;
+            font-weight: 400 !important;
+            color: rgba(255, 255, 255, 0.85) !important;
+            line-height: 1.4 !important;
+            text-align: center !important;
+            margin: 0 !important;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2) !important;
+        }
+        
+        /* Clean Typography matching website theme */
+        .flip-title {
+            font-family: 'Inter', 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif !important;
+            font-size: 1.1rem !important;
+            font-weight: 600 !important;
+            color: #ffffff !important;
+            margin-bottom: 0 !important;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3) !important;
+            line-height: 1.3 !important;
+            letter-spacing: -0.02em !important;
+            text-align: center !important;
+            padding: 0 0.5rem !important;
+            max-width: 100% !important;
+            word-wrap: break-word !important;
+            hyphens: auto !important;
+            position: relative !important;
+            z-index: 3 !important;
+        }
+        
+        /* Front card titles - clean and professional */
+        .flip-card-front .flip-title {
+            font-size: 1.2rem !important;
+            font-weight: 700 !important;
+            text-transform: none !important;
+            letter-spacing: -0.025em !important;
+            color: #ffffff !important;
+            text-shadow: 0 2px 6px rgba(0, 0, 0, 0.4) !important;
+        }
+        
+        /* Remove decorative icons for cleaner look */
+        .flip-card-front .flip-title::before {
+            display: none;
+        }
+        
+        /* Back card title styling */
+        .flip-card-back .flip-title {
+            font-size: 1rem !important;
+            font-weight: 600 !important;
+            color: #ffffff !important;
+        }
+        
+        /* Clean content layout matching website theme */
+        .flip-content {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            text-align: center;
+            position: relative;
+            z-index: 2;
+            padding: 1rem;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        
+        /* Simple spacing for front and back */
+        .flip-card-front .flip-content,
+        .flip-card-back .flip-content {
+            gap: 0.5rem;
+            justify-content: center;
+            padding: 1rem;
+        }
+        
+        /* Remove decorative elements */
+        .flip-card-front .flip-content::after {
+            display: none;
+        }
+        
+        /* Clean description styling */
+        .flip-description {
+            font-family: 'Inter', 'Poppins', -apple-system, BlinkMacSystemFont, sans-serif !important;
+            font-size: 0.85rem !important;
+            font-weight: 400 !important;
+            color: #ffffff !important;
+            line-height: 1.4 !important;
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4) !important;
+            text-align: center !important;
+            letter-spacing: 0.01em !important;
+            padding: 0 0.5rem !important;
+            max-height: 100% !important;
+            overflow-y: auto !important;
+            position: relative !important;
+            word-wrap: break-word !important;
+            hyphens: auto !important;
+            opacity: 0.95 !important;
+            z-index: 3 !important;
+        }
+        
+        /* Enhanced flip content container - Fixed Positioning */
+        .flip-content {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            text-align: center;
+            position: relative;
+            z-index: 2;
+            padding: 0.5rem;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        
+        /* Front card content gets extra spacing - no transform changes */
+        .flip-card-front .flip-content {
+            gap: 0.5rem;
+        }
+        
+        /* Back card content is more compact - no transform changes */
+        .flip-card-back .flip-content {
+            gap: 0.3rem;
+            justify-content: center;
+            padding: 0.5rem;
+        }
+        
+        /* Additional decorative elements for visual interest - no positioning changes */
+        .flip-card-front .flip-content::after {
+            content: '';
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            width: 20px;
+            height: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            z-index: 1;
+        }
+        
+        /* Remove corner accent that might cause positioning issues */
+        .flip-card-back::after {
+            display: none;
+        }
+        
+        /* Clean scrollbar design */
+        .flip-description::-webkit-scrollbar {
+            width: 3px;
+        }
+        
+        .flip-description::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 2px;
+        }
+        
+        .flip-description::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 2px;
+        }
+        
+        .flip-description::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.4);
+        }
+        
+        /* Hover animation removed for flip cards - flip cards now use their own animation */
+        /* .stat-item::before - removed for flip cards */
+        
+        /* No longer needed for flip cards */
+        /* .stat-item:hover::before - removed */
+        
+        /* No longer needed for flip cards */
+        /* .stat-item:hover - removed */
+        
+        .stat-number {
+            background: linear-gradient(135deg, #ffffff 0%, #f0f9ff 100%) !important;
+            -webkit-background-clip: text !important;
+            -webkit-text-fill-color: transparent !important;
+            background-clip: text !important;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+            font-size: 3.5rem !important;
+            font-weight: 800 !important;
+            margin-bottom: 0.5rem !important;
+            position: relative !important;
+            z-index: 2 !important;
+            line-height: 1 !important;
+        }
+        
+        .stat-label {
+            color: rgba(255, 255, 255, 0.95) !important;
+            font-weight: 600 !important;
+            text-transform: uppercase !important;
+            letter-spacing: 1px !important;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1) !important;
+            font-size: 0.875rem !important;
+            position: relative !important;
+            z-index: 2 !important;
+        }
+        
+        /* Enhanced Buttons - Fixed Sizing */
+        .btn-hero-primary {
+            min-width: 220px !important;
+            padding: 18px 36px !important;
+            gap: 12px !important;
+            font-size: 17px !important;
+            margin: 8px !important;
+            background: linear-gradient(135deg, #1e40af 0%, #2563eb 100%) !important;
+            border: 1px solid rgba(255, 255, 255, 0.2) !important;
+            box-shadow: 0 10px 30px rgba(30, 64, 175, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
+            position: relative !important;
+            overflow: hidden !important;
+        }
+        
+        .btn-hero-primary::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.6s ease;
+        }
+        
+        .btn-hero-primary:hover::before {
+            left: 100%;
+        }
+        
+        .btn-hero-secondary {
+            min-width: 220px !important;
+            padding: 18px 36px !important;
+            gap: 12px !important;
+            font-size: 17px !important;
+            margin: 8px !important;
+            background: rgba(255, 255, 255, 0.1) !important;
+            border: 2px solid rgba(255, 255, 255, 0.3) !important;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
+            position: relative !important;
+            overflow: hidden !important;
+        }
+        
+        .btn-hero-secondary::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transition: left 0.6s ease;
+        }
+        
+        .btn-hero-secondary:hover::before {
+            left: 100%;
+        }
+        
+        /* Hero Actions Spacing */
+        .hero-actions {
+            margin-top: 3rem !important;
+        }
+        
+        /* Hero content positioning */
+        .hero-content {
+            position: relative !important;
+            z-index: 10 !important;
+            padding: 0 !important;
+            max-width: 1200px !important;
+            margin: 0 auto !important;
+        }
+        
+        /* Ensure proper text contrast */
+        .hero-title, .hero-subtitle, .hero-description {
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3) !important;
+        }
+        
+        /* Enhanced button styling */
+        .btn-hero-primary, .btn-hero-secondary {
+            backdrop-filter: blur(10px) !important;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2) !important;
+            transition: all 0.3s ease !important;
+        }
+        
+        .btn-hero-primary:hover, .btn-hero-secondary:hover {
+            transform: translateY(-2px) !important;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3) !important;
+        }
+        
+        /* Enhanced stat cards styling */
+        .stat-item {
+            transition: all 0.3s ease !important;
+        }
+        
+        .stat-item:hover {
+            transform: translateY(-8px) !important;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.9) !important;
+        }
+        
+        /* Particles animation */
+        .particles-container {
+            position: absolute !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            pointer-events: none !important;
+            z-index: 2 !important;
+        }
+        
+        /* Marine Elements */
+        .marine-elements {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 3;
+            overflow: hidden;
+        }
+        
+        .bubble {
+            position: absolute;
+            background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.4), rgba(255, 255, 255, 0.1));
+            border-radius: 50%;
+            animation: float-up linear infinite;
+            opacity: 0.7;
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.3), inset 0 0 20px rgba(255, 255, 255, 0.2);
+        }
+        
+        .bubble::before {
+            content: '';
+            position: absolute;
+            top: 20%;
+            left: 20%;
+            width: 30%;
+            height: 30%;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 50%;
+            opacity: 0.8;
+        }
+        
+        .fish-silhouette {
+            position: absolute;
+            color: rgba(255, 255, 255, 0.15);
+            font-size: 2rem;
+            animation: swim linear infinite;
+            z-index: 1;
+        }
+        
+        .coral-shape {
+            position: absolute;
+            color: rgba(255, 255, 255, 0.1);
+            font-size: 1.5rem;
+            animation: sway ease-in-out infinite;
+            z-index: 1;
+        }
+        
+        .jellyfish {
+            position: absolute;
+            color: rgba(255, 255, 255, 0.2);
+            font-size: 2.5rem;
+            animation: jellyfish-float ease-in-out infinite;
+            z-index: 1;
+        }
+        
+        .seaweed {
+            position: absolute;
+            color: rgba(34, 197, 94, 0.3);
+            font-size: 3rem;
+            animation: seaweed-sway ease-in-out infinite;
+            transform-origin: bottom center;
+            z-index: 1;
+        }
+        
+        /* Floating Animations */
+        @keyframes float-up {
+            from {
+                transform: translateY(100vh) scale(0);
+                opacity: 0;
+            }
+            10% {
+                opacity: 0.7;
+            }
+            90% {
+                opacity: 0.7;
+            }
+            to {
+                transform: translateY(-20vh) scale(1);
+                opacity: 0;
+            }
+        }
+        
+        @keyframes swim {
+            from {
+                transform: translateX(-10vw);
+            }
+            to {
+                transform: translateX(110vw);
+            }
+        }
+        
+        @keyframes sway {
+            0%, 100% {
+                transform: rotate(-5deg) scale(1);
+            }
+            50% {
+                transform: rotate(5deg) scale(1.1);
+            }
+        }
+        
+        @keyframes jellyfish-float {
+            0%, 100% {
+                transform: translateY(0) rotate(-2deg);
+            }
+            33% {
+                transform: translateY(-20px) rotate(1deg);
+            }
+            66% {
+                transform: translateY(10px) rotate(-1deg);
+            }
+        }
+        
+        @keyframes seaweed-sway {
+            0%, 100% {
+                transform: rotate(-3deg);
+            }
+            50% {
+                transform: rotate(3deg);
+            }
+        }
+        
+        /* Depth Effects */
+        .depth-layer-1 {
+            z-index: 1;
+            opacity: 0.3;
+        }
+        
+        .depth-layer-2 {
+            z-index: 2;
+            opacity: 0.5;
+        }
+        
+        .depth-layer-3 {
+            z-index: 3;
+            opacity: 0.7;
+        }
+
+
+        
+        /* Fade in animation */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .animate-fadeInUp {
+            animation: fadeInUp 1s ease-out;
+        }
+        
+        /* Smooth scroll behavior */
+        html {
+            scroll-behavior: smooth !important;
+        }
+        
+        /* Enhanced responsive design */
+        @media (max-width: 768px) {
+            .ocean-hero {
+                min-height: calc(100vh - 90px) !important;
+                padding-top: 120px !important;
+                margin-top: -90px !important;
+            }
+            
+            body {
+                padding-top: 90px !important;
+            }
+            
+            .wave-svg, .wave-bottom {
+                height: 100px !important;
+            }
+            
+            .wave-svg svg, .wave-bottom svg {
+                height: 100px !important;
+            }
+            
+            /* Flip card responsive adjustments */
+            .flip-card {
+                height: 160px;
+            }
+            
+            .stat-item {
+                min-height: 160px !important;
+                margin: 0.4rem !important;
+            }
+            
+            .flip-card-front, .flip-card-back {
+                padding: 1rem 0.8rem !important;
+                border-radius: 10px !important;
+            }
+            
+            .flip-title {
+                font-size: 1rem !important;
+                line-height: 1.15 !important;
+                padding: 0 0.2rem !important;
+            }
+            
+            .flip-description {
+                font-size: 0.75rem !important;
+                line-height: 1.3 !important;
+                padding: 0 0.15rem !important;
+            }
+            
+            /* Better grid spacing on mobile */
+            .hero-stats {
+                gap: 0.75rem !important;
+                padding: 0 0.5rem !important;
+            }
+            
+            /* Touch devices - faster transitions */
+            .flip-card-inner {
+                transition: transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            }
+        }
+        
+        /* Extra small devices */
+        @media (max-width: 480px) {
+            .flip-card {
+                height: 140px;
+            }
+            
+            .stat-item {
+                min-height: 140px !important;
+                margin: 0.3rem !important;
+            }
+            
+            .flip-card-front, .flip-card-back {
+                padding: 0.8rem 0.6rem !important;
+                border-radius: 8px !important;
+            }
+            
+            .flip-title {
+                font-size: 0.9rem !important;
+                line-height: 1.1 !important;
+                letter-spacing: -0.01em !important;
+                padding: 0 0.1rem !important;
+            }
+            
+            .flip-description {
+                font-size: 0.7rem !important;
+                line-height: 1.25 !important;
+                padding: 0 0.05rem !important;
+            }
+            
+            /* Tighter grid on small phones */
+            .hero-stats {
+                gap: 0.5rem !important;
+                padding: 0 0.25rem !important;
+                margin-top: 1.5rem !important;
+            }
+        }
+        
+        /* Enhanced Wave Animation - Static (No Movement) */
+        .wave-path {
+            fill: rgba(255, 255, 255, 0.25) !important;
+            /* Removed animation to keep waves static */
+        }
+        
+        /* Enhanced Visual Card Styling */
+        .visual-footer {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid rgba(0, 0, 0, 0.1);
+        }
+        
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+        
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: #dc3545;
+        }
+        
+        .status-dot.active {
+            background-color: #28a745;
+            animation: pulse 2s infinite;
+        }
+        
+        .status-text {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #6b7280;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        
+        /* Wave animation removed - waves stay static */
+    </style>
+</head>
+<body class="ocean-bg">
+    <!-- Import Universal Navbar Component -->
+    <div id="navbar-container">
+        <!-- Universal Navigation Bar Component -->
+        <nav id="universal-navbar">
+            <div class="container">
+                <div class="nav-content">
+                    <!-- Logo Section -->
+                    <div class="logo-section">
+                        <div>
+                            <h1>CMLRE</h1>
+                            <p>Ocean Intelligence</p>
+                        </div>
+                    </div>
+
+                    <!-- Desktop Navigation Menu -->
+                    <div class="desktop-nav">
+                        <a href="index.html" class="nav-link active" data-page="home" style="--index: 1">
+                            Home
+                        </a>
+                        <a href="about.html" class="nav-link" data-page="about" style="--index: 2">
+                            About
+                        </a>
+                        <a href="features.html" class="nav-link" data-page="features" style="--index: 3">
+                            Features
+                        </a>
+                    </div>
+
+                    <!-- CTA Button -->
+                    <div class="cta-section">
+                        <a href="login.html" class="btn-primary">
+                            Launch Platform
+                        </a>
+                    </div>
+
+                    <!-- Mobile Menu Button -->
+                    <button class="mobile-menu-button" onclick="toggleMobileMenu()">
+                        <span class="hamburger-line"></span>
+                        <span class="hamburger-line"></span>
+                        <span class="hamburger-line"></span>
+                    </button>
+                </div>
+
+                <!-- Mobile Navigation Menu -->
+                <div class="mobile-menu" id="mobile-menu">
+                    <div class="mobile-nav-content">
+                        <a href="index.html" class="mobile-nav-link" data-page="home">
+                            Home
+                        </a>
+                        <a href="about.html" class="mobile-nav-link" data-page="about">
+                            About
+                        </a>
+                        <a href="features.html" class="mobile-nav-link" data-page="features">
+                            Features
+                        </a>
+                        <div class="mobile-cta">
+                            <a href="login.html" class="btn-primary">
+                                Launch Platform
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </div>
+    
+    <script>
+        // Universal Navbar JavaScript
+        function toggleMobileMenu() {
+            const mobileMenu = document.getElementById('mobile-menu');
+            const menuBtn = document.querySelector('.mobile-menu-button');
+            
+            mobileMenu.classList.toggle('show');
+            menuBtn.classList.toggle('active');
+        }
+
+        // Set active nav link based on current page
+        function setActiveNavLink() {
+            const currentPage = window.location.pathname.split('/').pop() || 'index.html';
+            const pageMapping = {
+                'index.html': 'home',
+                'about.html': 'about',
+                'features.html': 'features',
+                'login.html': 'login'
+            };
+            
+            const activePage = pageMapping[currentPage] || 'home';
+            
+            // Remove active class from all links
+            document.querySelectorAll('.nav-link, .mobile-nav-link').forEach(link => {
+                link.classList.remove('active');
+            });
+            
+            // Add active class to current page links
+            document.querySelectorAll(`[data-page="${activePage}"]`).forEach(link => {
+                link.classList.add('active');
+            });
+        }
+
+        // Initialize navbar when DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            setActiveNavLink();
+            
+            // Close mobile menu when clicking outside
+            document.addEventListener('click', function(event) {
+                const mobileMenu = document.getElementById('mobile-menu');
+                const menuBtn = document.querySelector('.mobile-menu-button');
+                
+                if (mobileMenu && menuBtn && !mobileMenu.contains(event.target) && !menuBtn.contains(event.target)) {
+                    mobileMenu.classList.remove('show');
+                    menuBtn.classList.remove('active');
+                }
+            });
+            
+            // Smooth scroll for anchor links
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    const target = document.querySelector(this.getAttribute('href'));
+                    if (target) {
+                        target.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'start'
+                        });
+                    }
+                });
+            });
+        });
+    </script>
+
+    <!-- Login Notification Popup -->
+    <div id="loginPopup" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 transform scale-95 transition-all duration-300">
+            <div class="p-8 text-center">
+                <!-- Icon -->
+                <div class="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <i class="fas fa-key text-blue-600 text-2xl"></i>
+                </div>
+                
+                <!-- Title -->
+                <h3 class="text-2xl font-bold text-gray-900 mb-4">
+                    <span class="script-font text-blue-600">Demo</span> Access Credentials
+                </h3>
+                
+                <!-- Message -->
+                <p class="text-gray-600 mb-6 leading-relaxed">
+                    Use these credentials to access the full prototype features of the Ocean Intelligence Platform:
+                </p>
+                
+                <!-- Credentials -->
+                <div class="bg-blue-50 border border-blue-200 rounded-xl p-6 mb-6">
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between bg-white rounded-lg p-3 border">
+                            <span class="text-sm font-medium text-gray-700">Email:</span>
+                            <span class="font-mono text-blue-600 font-bold" id="demoEmail">cmlre@gov.in</span>
+                            <button onclick="copyToClipboard('cmlre@gov.in', 'Email')" class="text-blue-600 hover:text-blue-800 transition-colors">
+                                <i class="fas fa-copy"></i>
+                            </button>
+                        </div>
+                        <div class="flex items-center justify-between bg-white rounded-lg p-3 border">
+                            <span class="text-sm font-medium text-gray-700">Password:</span>
+                            <span class="font-mono text-blue-600 font-bold" id="demoPassword">1234</span>
+                            <button onclick="copyToClipboard('1234', 'Password')" class="text-blue-600 hover:text-blue-800 transition-colors">
+                                <i class="fas fa-copy"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Actions -->
+                <div class="flex flex-col sm:flex-row gap-3">
+                    <button onclick="goToLogin()" class="flex-1 bg-blue-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-blue-700 transition-colors">
+                        <i class="fas fa-sign-in-alt mr-2"></i>
+                        Go to Login
+                    </button>
+                    <button onclick="closeLoginPopup()" class="flex-1 bg-gray-100 text-gray-700 px-6 py-3 rounded-xl font-semibold hover:bg-gray-200 transition-colors">
+                        <i class="fas fa-times mr-2"></i>
+                        Close
+                    </button>
+                </div>
+                
+                <!-- Note -->
+                <p class="text-xs text-gray-500 mt-4">
+                    This is a demonstration account for prototype evaluation purposes.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Enhanced Hero Section with Ocean Waves -->
+    <section class="ocean-hero relative min-h-screen flex items-center justify-center overflow-hidden">
+        <!-- Dynamic Background Gradients -->
+        <div class="absolute inset-0 bg-gradient-to-br from-blue-600 via-blue-700 to-blue-900"></div>
+        <div class="absolute inset-0 bg-gradient-to-tr from-transparent via-blue-500/20 to-cyan-400/30"></div>
+        <div class="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-blue-900/40"></div>
+        
+        <!-- Animated Overlay -->
+        <div class="absolute inset-0 bg-gradient-to-r from-blue-600/30 via-transparent to-blue-800/30 animate-pulse" style="animation-duration: 4s;"></div>
+        
+        <!-- Enhanced Wave Background -->
+        <div class="wave-animation">
+            <!-- Top Wave with enhanced colors -->
+            <div class="wave-svg">
+                <svg viewBox="0 0 1200 120" preserveAspectRatio="none">
+                    <path class="wave-path" d="M0,0V46.29c47.79,22.2,103.59,32.17,158,28,70.36-5.37,136.33-33.31,206.8-37.5C438.64,32.43,512.34,53.67,583,72.05c69.27,18,138.3,24.88,209.4,13.08,36.15-6,69.85-17.84,104.45-29.34C989.49,25,1113-14.29,1200,52.47V0Z" opacity=".15" fill="rgba(255, 255, 255, 0.2)"></path>
+                    <path class="wave-path" d="M0,0V15.81C13,36.92,27.64,56.86,47.69,72.05,99.41,111.27,165,111,224.58,91.58c31.15-10.15,60.09-26.07,89.67-39.8,40.92-19,84.73-46,130.83-49.67,36.26-2.85,70.9,9.42,98.6,31.56,31.77,25.39,62.32,62,103.63,73,40.44,10.79,81.35-6.69,119.13-24.28s75.16-39,116.92-43.05c59.73-5.85,113.28,22.88,168.9,38.84,30.2,8.66,59,6.17,87.09-7.5,22.43-10.89,48-26.93,60.65-49.24V0Z" opacity=".3" fill="rgba(255, 255, 255, 0.15)"></path>
+                    <path class="wave-path" d="M0,0V5.63C149.93,59,314.09,71.32,475.83,42.57c43-7.64,84.23-20.12,127.61-26.46,59-8.63,112.48,12.24,165.56,35.4C827.93,77.22,886,95.24,951.2,90c86.53-7,172.46-45.71,248.8-84.81V0Z" opacity=".5" fill="rgba(255, 255, 255, 0.1)"></path>
+                </svg>
+            </div>
+        </div>
+        
+        <!-- Floating Particles -->
+        <div class="particles-container" id="particles-container"></div>
+        
+        <!-- Marine Elements -->
+        <div class="marine-elements">
+            <!-- Floating Bubbles -->
+            <div class="bubble depth-layer-1" style="width: 15px; height: 15px; left: 10%; animation-duration: 8s; animation-delay: 0s;"></div>
+            <div class="bubble depth-layer-2" style="width: 25px; height: 25px; left: 25%; animation-duration: 12s; animation-delay: 2s;"></div>
+            <div class="bubble depth-layer-3" style="width: 35px; height: 35px; left: 45%; animation-duration: 10s; animation-delay: 4s;"></div>
+            <div class="bubble depth-layer-1" style="width: 20px; height: 20px; left: 65%; animation-duration: 15s; animation-delay: 6s;"></div>
+            <div class="bubble depth-layer-2" style="width: 30px; height: 30px; left: 80%; animation-duration: 9s; animation-delay: 8s;"></div>
+            <div class="bubble depth-layer-3" style="width: 18px; height: 18px; left: 90%; animation-duration: 11s; animation-delay: 1s;"></div>
+            
+            <!-- Swimming Fish -->
+            <div class="fish-silhouette depth-layer-1" style="top: 15%; animation-duration: 25s; animation-delay: 0s;">
+                <i class="fas fa-fish"></i>
+            </div>
+            <div class="fish-silhouette depth-layer-2" style="top: 45%; animation-duration: 30s; animation-delay: 8s;">
+                <i class="fas fa-fish"></i>
+            </div>
+            <div class="fish-silhouette depth-layer-1" style="top: 75%; animation-duration: 35s; animation-delay: 15s;">
+                <i class="fas fa-fish"></i>
+            </div>
+            
+            <!-- Floating Jellyfish -->
+            <div class="jellyfish depth-layer-2" style="top: 25%; left: 15%; animation-duration: 6s; animation-delay: 2s;">
+                <i class="fas fa-circle" style="transform: scaleY(0.7);"></i>
+            </div>
+            <div class="jellyfish depth-layer-1" style="top: 60%; left: 75%; animation-duration: 8s; animation-delay: 5s;">
+                <i class="fas fa-circle" style="transform: scaleY(0.7);"></i>
+            </div>
+            
+            <!-- Seaweed -->
+            <div class="seaweed depth-layer-1" style="bottom: 0; left: 5%; animation-duration: 4s; animation-delay: 0s;">
+                <i class="fas fa-seedling"></i>
+            </div>
+            <div class="seaweed depth-layer-1" style="bottom: 0; left: 20%; animation-duration: 5s; animation-delay: 1s;">
+                <i class="fas fa-seedling"></i>
+            </div>
+            <div class="seaweed depth-layer-1" style="bottom: 0; left: 85%; animation-duration: 4.5s; animation-delay: 2s;">
+                <i class="fas fa-seedling"></i>
+            </div>
+            <div class="seaweed depth-layer-1" style="bottom: 0; left: 95%; animation-duration: 3.5s; animation-delay: 0.5s;">
+                <i class="fas fa-seedling"></i>
+            </div>
+            
+            <!-- Coral Shapes -->
+            <div class="coral-shape depth-layer-1" style="bottom: 5%; left: 30%; animation-duration: 6s; animation-delay: 1s;">
+                <i class="fas fa-grip-lines-vertical"></i>
+            </div>
+            <div class="coral-shape depth-layer-1" style="bottom: 8%; left: 70%; animation-duration: 7s; animation-delay: 3s;">
+                <i class="fas fa-grip-lines-vertical"></i>
+            </div>
+        </div>
+        
+        <!-- Hero Content -->
+        <div class="relative z-10 text-center text-white px-6 max-w-6xl mx-auto">
+            <!-- Main Heading -->
+            <div class="hero-content">
+                <h1 class="hero-title">
+                    <span class="script-font text-6xl md:text-8xl lg:text-9xl block mb-4 opacity-0 animate-fadeInUp" id="hero-title" style="animation-delay: 0.2s; animation-fill-mode: forwards;">
+                        Ocean Intelligence
+                    </span>
+                    <span class="hero-subtitle text-2xl md:text-4xl lg:text-5xl font-light opacity-0 animate-fadeInUp" id="hero-subtitle" style="animation-delay: 0.4s; animation-fill-mode: forwards;">
+                        Platform
+                    </span>
+                </h1>
+                
+                <!-- Subtitle -->
+                <p class="hero-description text-xl md:text-2xl lg:text-3xl font-light mt-6 mb-8 leading-relaxed opacity-0 animate-fadeInUp" style="animation-delay: 0.6s; animation-fill-mode: forwards;">
+                    Advanced Marine Data Analytics • Real-time Species Classification • AI-Powered Insights
+                </p>
+                
+                <!-- Hero Actions -->
+                <div class="hero-actions flex flex-col md:flex-row gap-6 justify-center items-center mt-8 opacity-0 animate-fadeInUp" style="animation-delay: 0.8s; animation-fill-mode: forwards;">
+                    <a href="about.html" class="btn-hero-primary group">
+                        <i class="fas fa-compass mr-3 group-hover:rotate-180 transition-transform duration-500"></i>
+                        Explore the Ocean
+                        <div class="btn-ripple"></div>
+                    </a>
+                    
+                    <a href="features.html" class="btn-hero-secondary group">
+                        <i class="fas fa-play mr-3 group-hover:scale-110 transition-transform duration-300"></i>
+                        Watch Demo
+                        <div class="btn-ripple"></div>
+                    </a>
+                </div>
+
+            </div>
+        </div>
+        
+    
+    </section>
+
+    <!-- Integrate & Analyze Marine Data Section -->
+    <section class="py-16 bg-gradient-to-br from-blue-50 via-white to-blue-100 relative z-10 overflow-hidden">
+        <!-- Background Elements -->
+        <div class="absolute inset-0">
+            <div class="absolute top-10 left-10 w-48 h-48 bg-blue-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20"></div>
+            <div class="absolute bottom-10 right-10 w-64 h-64 bg-indigo-300 rounded-full mix-blend-multiply filter blur-3xl opacity-20"></div>
+        </div>
+        
+        <div class="container mx-auto px-6 relative z-10">
+            <div class="max-w-6xl mx-auto text-center">
+                <h2 class="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
+                    Integrate & Analyze <span class="script-font text-blue-600 text-5xl md:text-6xl">Marine Data</span>
+                </h2>
+                <p class="text-lg md:text-xl text-gray-700 leading-relaxed mb-12 max-w-3xl mx-auto">
+                    Break down data silos with our comprehensive platform for processing 
+                    heterogeneous marine biological datasets through <span class="script-font text-blue-600">AI-enabled</span> analysis and 
+                    automated standardization.
+                </p>
+                
+                <!-- Action Buttons -->
+                <div class="flex flex-col md:flex-row gap-4 justify-center mb-12">
+                    <a href="features.html" class="inline-flex items-center px-7 py-3 text-base font-semibold bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl shadow-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl">
+                        <i class="fas fa-play mr-2"></i>
+                        Start Analysis
+                    </a>
+                    <a href="#" class="inline-flex items-center px-7 py-3 text-base font-semibold text-blue-700 bg-white/80 backdrop-blur-sm rounded-xl border border-blue-200 hover:bg-blue-50 hover:border-blue-400 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
+                        <i class="fas fa-book mr-2"></i>
+                        View Documentation
+                    </a>
+                </div>
+                
+                <!-- Enhanced Feature Cards Grid -->
+                <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-5xl mx-auto">
+                    <!-- Multi-Format Card -->
+                    <div class="group bg-white/70 backdrop-blur-sm p-6 rounded-2xl shadow-lg border border-blue-200/50 hover:shadow-xl hover:border-blue-400 transition-all duration-400 hover:scale-105 hover:-translate-y-1 relative overflow-hidden">
+                        <div class="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-blue-600/10 opacity-0 group-hover:opacity-100 transition-opacity duration-400"></div>
+                        <div class="relative z-10 text-center">
+                            <div class="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300 shadow-md">
+                                <i class="fas fa-database text-2xl text-white"></i>
+                            </div>
+                            <h3 class="text-xl font-bold text-gray-900 mb-3">
+                                <span class="script-font text-blue-600">Multi</span>-Format
+                            </h3>
+                            <p class="text-sm text-gray-600 leading-relaxed mb-3">
+                                Structured & Unstructured data processing
+                            </p>
+                            <div class="flex flex-wrap gap-1 justify-center">
+                                <span class="px-2 py-1 bg-blue-100 text-blue-700 rounded-md text-xs">CSV</span>
+                                <span class="px-2 py-1 bg-blue-100 text-blue-700 rounded-md text-xs">JSON</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- AI-Powered Card -->
+                    <div class="group bg-white/70 backdrop-blur-sm p-6 rounded-2xl shadow-lg border border-blue-200/50 hover:shadow-xl hover:border-blue-400 transition-all duration-400 hover:scale-105 hover:-translate-y-1 relative overflow-hidden">
+                        <div class="absolute inset-0 bg-gradient-to-br from-blue-600/5 to-blue-700/10 opacity-0 group-hover:opacity-100 transition-opacity duration-400"></div>
+                        <div class="relative z-10 text-center">
+                            <div class="w-16 h-16 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300 shadow-md">
+                                <i class="fas fa-bolt text-2xl text-white"></i>
+                            </div>
+                            <h3 class="text-xl font-bold text-gray-900 mb-3">
+                                <span class="script-font text-blue-600">AI</span>-Powered
+                            </h3>
+                            <p class="text-sm text-gray-600 leading-relaxed mb-3">
+                                Automated processing with ML algorithms
+                            </p>
+                            <div class="flex flex-wrap gap-1 justify-center">
+                                <span class="px-2 py-1 bg-blue-100 text-blue-700 rounded-md text-xs">Neural Networks</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Cross-Analysis Card -->
+                    <div class="group bg-white/70 backdrop-blur-sm p-6 rounded-2xl shadow-lg border border-blue-200/50 hover:shadow-xl hover:border-blue-400 transition-all duration-400 hover:scale-105 hover:-translate-y-1 relative overflow-hidden">
+                        <div class="absolute inset-0 bg-gradient-to-br from-blue-400/5 to-blue-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-400"></div>
+                        <div class="relative z-10 text-center">
+                            <div class="w-16 h-16 bg-gradient-to-br from-blue-400 to-blue-500 rounded-xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300 shadow-md">
+                                <i class="fas fa-chart-bar text-2xl text-white"></i>
+                            </div>
+                            <h3 class="text-xl font-bold text-gray-900 mb-3">
+                                <span class="script-font text-blue-600">Cross</span>-Analysis
+                            </h3>
+                            <p class="text-sm text-gray-600 leading-relaxed mb-3">
+                                Multi-domain insights & connections
+                            </p>
+                            <div class="flex flex-wrap gap-1 justify-center">
+                                <span class="px-2 py-1 bg-blue-100 text-blue-700 rounded-md text-xs">Patterns</span>
+                                <span class="px-2 py-1 bg-blue-100 text-blue-700 rounded-md text-xs">Trends</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Standards Card -->
+                    <div class="group bg-white/70 backdrop-blur-sm p-6 rounded-2xl shadow-lg border border-blue-200/50 hover:shadow-xl hover:border-blue-400 transition-all duration-400 hover:scale-105 hover:-translate-y-1 relative overflow-hidden">
+                        <div class="absolute inset-0 bg-gradient-to-br from-blue-700/5 to-blue-800/10 opacity-0 group-hover:opacity-100 transition-opacity duration-400"></div>
+                        <div class="relative z-10 text-center">
+                            <div class="w-16 h-16 bg-gradient-to-br from-blue-700 to-blue-800 rounded-xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform duration-300 shadow-md">
+                                <i class="fas fa-globe text-2xl text-white"></i>
+                            </div>
+                            <h3 class="text-xl font-bold text-gray-900 mb-3">
+                                <span class="script-font text-blue-600">Global</span> Standards
+                            </h3>
+                            <p class="text-sm text-gray-600 leading-relaxed mb-3">
+                                Darwin Core & IODE compliance
+                            </p>
+                            <div class="flex flex-wrap gap-1 justify-center">
+                                <span class="px-2 py-1 bg-blue-100 text-blue-700 rounded-md text-xs">Darwin Core</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Advanced Marine Intelligence Platform Section -->
+    <section class="py-24 bg-white relative overflow-hidden">
+        <!-- Background Elements -->
+        <div class="absolute inset-0">
+            <div class="absolute top-10 right-10 w-72 h-72 bg-blue-100 rounded-full mix-blend-multiply filter blur-3xl opacity-20"></div>
+            <div class="absolute bottom-10 left-10 w-80 h-80 bg-indigo-100 rounded-full mix-blend-multiply filter blur-3xl opacity-20"></div>
+        </div>
+        
+        <div class="container mx-auto px-6 relative z-10">
+            <div class="text-center mb-16">
+                <h2 class="text-5xl md:text-6xl font-bold text-gray-800 mb-6">
+                    Advanced <span class="script-font text-blue-600 text-6xl md:text-7xl">Marine Intelligence</span> Platform
+                </h2>
+                <p class="text-xl md:text-2xl text-gray-700 max-w-4xl mx-auto font-medium leading-relaxed">
+                    Cutting-edge <span class="text-blue-600 font-bold">AI technologies</span> and comprehensive data processing capabilities 
+                    designed specifically for <span class="text-emerald-600 font-bold">marine research</span> and <span class="text-purple-600 font-bold">conservation</span>
+                </p>
+            </div>
+            
+            <div class="max-w-5xl mx-auto">
+                <!-- Feature List -->
+                <div class="space-y-8">
+                    <!-- AI-Powered Otolith Analysis -->
+                    <div class="group bg-gradient-to-br from-blue-500 via-blue-600 to-blue-700 p-8 rounded-3xl shadow-2xl border border-blue-400 hover:shadow-3xl transition-all duration-300 hover:-translate-y-2">
+                        <div class="flex items-start space-x-6">
+                            <div class="w-16 h-16 bg-white/20 backdrop-blur-lg text-white rounded-2xl flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform border border-white/30">
+                                <i class="fas fa-microscope text-xl"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-3xl font-bold text-white mb-4 group-hover:text-blue-100 transition-colors">
+                                    <span class="script-font text-blue-100">AI-Powered</span> Otolith Analysis
+                                </h3>
+                                <p class="text-blue-50 leading-relaxed text-lg font-medium">
+                                    Revolutionary computer vision models analyze fish otolith morphology with <span class="text-white font-bold">95% accuracy</span>. 
+                                    Automated species identification, age determination, and growth pattern analysis for <span class="text-white font-bold">50+ marine species</span>.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Environmental DNA Intelligence -->
+                    <div class="group bg-gradient-to-br from-emerald-500 via-green-600 to-teal-600 p-8 rounded-3xl shadow-2xl border border-emerald-400 hover:shadow-3xl transition-all duration-300 hover:-translate-y-2">
+                        <div class="flex items-start space-x-6">
+                            <div class="w-16 h-16 bg-white/20 backdrop-blur-lg text-white rounded-2xl flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform border border-white/30">
+                                <i class="fas fa-dna text-xl"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-3xl font-bold text-white mb-4 group-hover:text-emerald-100 transition-colors">
+                                    Environmental <span class="script-font text-emerald-100">DNA Intelligence</span>
+                                </h3>
+                                <p class="text-emerald-50 leading-relaxed text-lg font-medium">
+                                    Advanced genomic sequencing pipeline processes <span class="text-white font-bold">1K+ eDNA samples</span> to detect marine biodiversity. 
+                                    Non-invasive species monitoring with <span class="text-white font-bold">99% reliability</span> across diverse aquatic ecosystems, identifying <span class="text-white font-bold">50+ marine species</span>.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Cloud-Native Architecture -->
+                    <div class="group bg-gradient-to-br from-purple-500 via-violet-600 to-indigo-600 p-8 rounded-3xl shadow-2xl border border-purple-400 hover:shadow-3xl transition-all duration-300 hover:-translate-y-2">
+                        <div class="flex items-start space-x-6">
+                            <div class="w-16 h-16 bg-white/20 backdrop-blur-lg text-white rounded-2xl flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform border border-white/30">
+                                <i class="fas fa-network-wired text-xl"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-3xl font-bold text-white mb-4 group-hover:text-purple-100 transition-colors">
+                                    <span class="script-font text-purple-100">Cloud-Native</span> Architecture
+                                </h3>
+                                <p class="text-purple-50 leading-relaxed text-lg font-medium">
+                                    Scalable microservices infrastructure built on <span class="text-white font-bold">Docker and PostgreSQL</span>. 
+                                    Real-time data processing with RabbitMQ queues handling <span class="text-white font-bold">1K+ sample datasets</span> seamlessly across <span class="text-white font-bold">15+ partner institutions</span>.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Call to Action -->
+    <section class="py-24 bg-gradient-to-br from-blue-600 via-blue-700 to-blue-800 text-white relative overflow-hidden">
+        <!-- Background Elements -->
+        <div class="absolute inset-0">
+            <div class="absolute top-20 left-20 w-64 h-64 bg-white/10 rounded-full mix-blend-overlay filter blur-3xl"></div>
+            <div class="absolute bottom-20 right-20 w-80 h-80 bg-white/5 rounded-full mix-blend-overlay filter blur-3xl"></div>
+        </div>
+        
+        <div class="container mx-auto px-6 text-center relative z-10">
+            <h2 class="text-5xl md:text-6xl font-bold mb-8">
+                Transform Marine Research with <span class="script-font text-blue-200 text-6xl md:text-7xl">AI Intelligence</span>
+            </h2>
+            <p class="text-xl md:text-2xl mb-12 max-w-4xl mx-auto opacity-90 leading-relaxed">
+                Join the revolution in ocean science. Our platform empowers researchers, conservationists, 
+                and marine biologists with cutting-edge AI tools for unprecedented insights into marine ecosystems 
+                and biodiversity patterns.
+            </p>
+            
+            <div class="flex flex-col md:flex-row gap-6 justify-center">
+                <a href="features.html" class="group inline-flex items-center px-8 py-4 text-lg font-semibold bg-white text-blue-600 rounded-2xl shadow-xl hover:bg-gray-100 transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl">
+                    <i class="fas fa-microscope mr-3 group-hover:rotate-12 transition-transform"></i>
+                    Explore Platform Features
+                </a>
+                <a href="login.html" class="group inline-flex items-center px-8 py-4 text-lg font-semibold text-white rounded-2xl border-2 border-white/30 backdrop-blur-lg bg-white/10 hover:bg-white hover:text-blue-600 transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl">
+                    <i class="fas fa-rocket mr-3 group-hover:rotate-12 transition-transform"></i>
+                    Launch Ocean Intelligence
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-gray-900 text-white py-16">
+        <div class="container mx-auto px-6">
+            <div class="grid md:grid-cols-4 gap-8">
+                <!-- Company Info -->
+                <div class="col-span-1 md:col-span-2">
+                    <div class="flex items-center space-x-4 mb-6">
+                        <i class="fas fa-anchor text-blue-400 text-2xl"></i>
+                        <div>
+                            <h3 class="font-bold text-xl">CMLRE</h3>
+                            <p class="text-sm text-blue-400">Ocean Intelligence Platform</p>
+                        </div>
+                    </div>
+                    <p class="text-gray-400 mb-6 max-w-md">
+                        Advancing marine research through AI-powered analysis and data visualization. 
+                        Contributing to ocean conservation and sustainable fisheries management.
+                    </p>
+                    <div class="flex space-x-4">
+                        <a href="#" class="social-link">
+                            <i class="fab fa-twitter"></i>
+                        </a>
+                        <a href="#" class="social-link">
+                            <i class="fab fa-linkedin"></i>
+                        </a>
+                        <a href="#" class="social-link">
+                            <i class="fab fa-github"></i>
+                        </a>
+                        <a href="#" class="social-link">
+                            <i class="fab fa-youtube"></i>
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- Quick Links -->
+                <div>
+                    <h4 class="font-semibold mb-4">Platform</h4>
+                    <ul class="space-y-2">
+                        <li><a href="features.html" class="footer-link">Features</a></li>
+                        <li><a href="login.html" class="footer-link">Login</a></li>
+                        <li><a href="about.html" class="footer-link">About</a></li>
+                    </ul>
+                </div>
+                
+                <!-- Support -->
+                <div>
+                    <h4 class="font-semibold mb-4">Support</h4>
+                    <ul class="space-y-2">
+                        <li><a href="#" class="footer-link">Documentation</a></li>
+                        <li><a href="#" class="footer-link">Help Center</a></li>
+                        <li><a href="#" class="footer-link">Privacy Policy</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="border-t border-gray-800 mt-12 pt-8 text-center text-gray-400">
+                <p>&copy; 2025 CMLRE Ocean Intelligence Platform. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="assets/js/auth.js"></script>
+    <script src="assets/js/ocean-effects.js"></script>
+    <script src="assets/js/homepage.js"></script>
+    
+    <script>
+        // Login Popup Functions
+        function showLoginPopup() {
+            const popup = document.getElementById('loginPopup');
+            popup.classList.remove('hidden');
+            setTimeout(() => {
+                popup.firstElementChild.classList.add('scale-100');
+                popup.firstElementChild.classList.remove('scale-95');
+            }, 10);
+        }
+
+        function closeLoginPopup() {
+            const popup = document.getElementById('loginPopup');
+            popup.firstElementChild.classList.add('scale-95');
+            popup.firstElementChild.classList.remove('scale-100');
+            setTimeout(() => {
+                popup.classList.add('hidden');
+            }, 300);
+        }
+
+        function goToLogin() {
+            closeLoginPopup();
+            window.location.href = 'login.html';
+        }
+
+        function copyToClipboard(text, type) {
+            navigator.clipboard.writeText(text).then(() => {
+                // Show a temporary feedback
+                const originalText = event.target.innerHTML;
+                event.target.innerHTML = '<i class="fas fa-check text-green-600"></i>';
+                setTimeout(() => {
+                    event.target.innerHTML = originalText;
+                }, 1000);
+            });
+        }
+
+        // Show popup when page loads (after a brief delay)
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(() => {
+                showLoginPopup();
+            }, 2000); // Show popup after 2 seconds
+
+            // Close popup when clicking outside
+            document.getElementById('loginPopup').addEventListener('click', (e) => {
+                if (e.target.id === 'loginPopup') {
+                    closeLoginPopup();
+                }
+            });
+        });
+
+        // Initialize homepage components
+        document.addEventListener('DOMContentLoaded', () => {
+            if (window.OceanEffects) {
+                window.oceanEffects = new OceanEffects();
+            }
+            
+            if (window.HomepageController) {
+                window.homepageController = new HomepageController();
+            }
+        });
+    </script>
+</body>
+</html>
+
