@@ -9,6 +9,12 @@ import sys
 from sqlalchemy import create_engine, text
 from PIL import Image
 import io
+import logging
+
+# Configure logging
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
+
 
 # --- Configuration ---
 RABBITMQ_HOST = 'rabbitmq'
@@ -19,10 +25,10 @@ def connect_to_rabbitmq():
     while True:
         try:
             connection = pika.BlockingConnection(pika.ConnectionParameters(host=RABBITMQ_HOST))
-            print("[*] Otolith Worker: Successfully connected to RabbitMQ.")
+            logger.info("Successfully connected to RabbitMQ.")
             return connection
-        except pika.exceptions.AMQPConnectionError:
-            print("[!] Otolith Worker: RabbitMQ not ready. Retrying in 5 seconds...")
+        except pika.exceptions.AMQPConnectionError as e:
+            logger.error(f"RabbitMQ not ready: {e}. Retrying in 5 seconds...")
             time.sleep(5)
 
 def validate_image_data(image_data):
@@ -33,21 +39,22 @@ def validate_image_data(image_data):
         image.verify()  # This will raise an exception if the image is corrupted
         return True
     except Exception as e:
-        print(f"[!] Otolith Worker: Image validation failed: {e}")
+        logger.error(f"Image validation failed: {e}")
         return False
 
 def process_message(ch, method, properties, body):
     """Callback function to process a message from the queue."""
+    logger.info(f"Received message: {body}")
     try:
         data = json.loads(body)
         image_id = data['image_id']
         image_data = base64.b64decode(data['image_data'])
         
-        print(f"[*] Otolith Worker: Received image {image_id}")
+        logger.info(f"Processing image: {image_id}")
 
         # Validate image data before processing
         if not validate_image_data(image_data):
-            print(f"[!] Otolith Worker: Skipping corrupted image {image_id}")
+            logger.warning(f"Skipping corrupted image {image_id}")
             ch.basic_ack(delivery_tag=method.delivery_tag)
             return
 
@@ -57,7 +64,7 @@ def process_message(ch, method, properties, body):
         
         # Check if image was successfully decoded
         if img is None:
-            print(f"[!] Otolith Worker: Failed to decode image {image_id}")
+            logger.error(f"Failed to decode image {image_id}")
             ch.basic_ack(delivery_tag=method.delivery_tag)
             return
         
@@ -79,7 +86,7 @@ def process_message(ch, method, properties, body):
                 "height": h,
                 "aspect_ratio": aspect_ratio
             }
-            print(f"[*] Otolith Worker: Calculated metrics for {image_id}: {metrics}")
+            logger.info(f"Calculated metrics for {image_id}: {metrics}")
 
             # --- Save to Database ---
             engine = create_engine(DATABASE_URL)
@@ -100,7 +107,7 @@ def process_message(ch, method, properties, body):
                 params = {**metrics, "lat": 15.5 - (area % 1000) / 5000, "lon": -75.2 - (perimeter % 1000) / 5000}
                 conn.execute(insert_sql, params)
                 conn.commit()
-            print(f"[*] Otolith Worker: Saved metrics for {image_id} to database.")
+            logger.info(f"Saved metrics for {image_id} to database.")
 
             # --- Trigger AI Worker ---
             channel = ch.connection.channel()
@@ -112,60 +119,60 @@ def process_message(ch, method, properties, body):
                 body=ai_message,
                 properties=pika.BasicProperties(delivery_mode=2)
             )
-            print(f"[*] Otolith Worker: Sent metrics for {image_id} to AI queue.")
+            logger.info(f"Sent metrics for {image_id} to AI queue.")
 
     except Exception as e:
-        print(f"[!] Otolith Worker: Error processing message: {e}")
+        logger.error(f"Error processing message: {e}")
 
     ch.basic_ack(delivery_tag=method.delivery_tag)
 
 def main():
     """Main function to start the otolith worker with connection recovery."""
-    print("[*] Otolith Worker: Starting main function...")
+    logger.info("Starting main function...")
     while True:
         try:
-            print("[*] Otolith Worker: Attempting to connect to RabbitMQ...")
+            logger.info("Attempting to connect to RabbitMQ...")
             connection = connect_to_rabbitmq()
-            print("[*] Otolith Worker: Creating channel...")
+            logger.info("Creating channel...")
             channel = connection.channel()
-            print("[*] Otolith Worker: Declaring queue...")
+            logger.info("Declaring queue...")
             channel.queue_declare(queue='otolith_queue', durable=True)
             
-            print("[*] Otolith Worker: Setting QoS...")
+            logger.info("Setting QoS...")
             channel.basic_qos(prefetch_count=1)
-            print("[*] Otolith Worker: Setting up consumer...")
+            logger.info("Setting up consumer...")
             channel.basic_consume(queue='otolith_queue', on_message_callback=process_message)
             
-            print('[*] Otolith Worker: Waiting for messages. To exit press CTRL+C')
+            logger.info('Waiting for messages. To exit press CTRL+C')
             channel.start_consuming()
             
         except pika.exceptions.StreamLostError as e:
-            print(f"[!] Otolith Worker: Lost connection to RabbitMQ ({e}). Reconnecting in 5 seconds...")
+            logger.error(f"Lost connection to RabbitMQ ({e}). Reconnecting in 5 seconds...")
             time.sleep(5)
         except pika.exceptions.AMQPConnectionError as e:
-            print(f"[!] Otolith Worker: AMQP Connection error ({e}). Reconnecting in 5 seconds...")
+            logger.error(f"AMQP Connection error ({e}). Reconnecting in 5 seconds...")
             time.sleep(5)
         except KeyboardInterrupt:
-            print('[*] Otolith Worker: Interrupted by user')
+            logger.info('Interrupted by user')
             try:
                 sys.exit(0)
             except SystemExit:
                 os._exit(0)
         except Exception as e:
-            print(f"[!] Otolith Worker: Unexpected error: {e}. Reconnecting in 5 seconds...")
+            logger.error(f"Unexpected error: {e}. Reconnecting in 5 seconds...")
             time.sleep(5)
 
 if __name__ == '__main__':
-    print("[*] Otolith Worker: Script started")
+    logger.info("Script started")
     try:
         main()
     except KeyboardInterrupt:
-        print('[*] Otolith Worker: Interrupted')
+        logger.info('Interrupted')
         try:
             sys.exit(0)
         except SystemExit:
             os._exit(0)
     except Exception as e:
-        print(f"[!] Otolith Worker: Fatal error: {e}")
+        logger.error(f"Fatal error: {e}")
         import traceback
         traceback.print_exc()
