@@ -12,7 +12,7 @@ import os
 import asyncio
 
 # --- Database Configuration ---
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://user:password@db/mydatabase")
+DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:yourpassword@localhost:5432/ocean-db")
 database = databases.Database(DATABASE_URL)
 metadata = sqlalchemy.MetaData()
 
