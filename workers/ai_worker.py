@@ -74,6 +74,7 @@ def update_prediction_in_db(image_id, species):
 def callback(ch, method, properties, body):
     """Callback function to process messages from the queue."""
     try:
+        print(f"[*] AI Worker: Received message: {body}")
         data = json.loads(body)
         image_id = data.get('image_id')
         if not image_id:
@@ -85,24 +86,41 @@ def callback(ch, method, properties, body):
         predicted_species = predict_species(data)
         if "Error" not in predicted_species:
             update_prediction_in_db(image_id, predicted_species)
-    except json.JSONDecodeError:
-        print("[!] AI Worker: Could not decode message body.")
     except Exception as e:
-        print(f"[!] AI Worker: An unexpected error occurred in callback: {e}")
-    
-    ch.basic_ack(delivery_tag=method.delivery_tag)
+        print(f"[!] AI Worker: Exception in callback: {e}")
+    finally:
+        try:
+            ch.basic_ack(delivery_tag=method.delivery_tag)
+        except Exception as ack_err:
+            print(f"[!] AI Worker: Failed to ack message: {ack_err}")
 
 def main():
     """Main function to start the AI worker."""
     load_model()
-    connection = connect_to_rabbitmq()
-    channel = connection.channel()
-    channel.queue_declare(queue=AI_QUEUE, durable=True)
-    channel.basic_qos(prefetch_count=1)
-    channel.basic_consume(queue=AI_QUEUE, on_message_callback=callback)
-    
-    print('[*] AI Worker: Waiting for messages. To exit press CTRL+C')
-    channel.start_consuming()
+    while True:
+        try:
+            connection = connect_to_rabbitmq()
+            channel = connection.channel()
+            channel.queue_declare(queue=AI_QUEUE, durable=True)
+            channel.basic_qos(prefetch_count=1)
+            channel.basic_consume(queue=AI_QUEUE, on_message_callback=callback)
+            print('[*] AI Worker: Waiting for messages. To exit press CTRL+C')
+            channel.start_consuming()
+        except pika.exceptions.StreamLostError as e:
+            print(f"[!] AI Worker: Lost connection to RabbitMQ ({e}). Reconnecting in 5 seconds...")
+            time.sleep(5)
+        except pika.exceptions.AMQPConnectionError as e:
+            print(f"[!] AI Worker: AMQP Connection error ({e}). Reconnecting in 5 seconds...")
+            time.sleep(5)
+        except KeyboardInterrupt:
+            print('Interrupted')
+            try:
+                sys.exit(0)
+            except SystemExit:
+                os._exit(0)
+        except Exception as e:
+            print(f"[!] AI Worker: Unexpected error: {e}. Reconnecting in 5 seconds...")
+            time.sleep(5)
 
 if __name__ == '__main__':
     try:
